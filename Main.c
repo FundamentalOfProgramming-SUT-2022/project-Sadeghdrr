@@ -104,7 +104,7 @@ void createfile()
 {
     if (access(command_tajzie[2], F_OK) == 0)
     {
-        printf("The file already exists and cannot be made again!");
+        printf("The file already exists and cannot be made again!\n");
         return;
     }
 
@@ -117,16 +117,16 @@ void createfile()
         int i = 3;
         while (command_tajzie[2][i] != '\0')
         {
-            while (command_tajzie[2][i] != '/')
-            {
-                direction[i] = command_tajzie[2][i];
-                i++;
-            }
-            mkdir(direction);
+            direction[i] = command_tajzie[2][i];
+            i++;
+
+            if (command_tajzie[2][i] == '/')
+                mkdir(direction);
         }
 
         FILE *file_to_be_made = fopen(direction, "w");
         fclose(file_to_be_made);
+        printf("File has successfully made!\n");
     }
 
     return;
@@ -134,13 +134,18 @@ void createfile()
 
 void barrasi()
 {
-    if (strcmp(command_tajzie[0], "creatfile") == 0)
+    if (strcmp(command_tajzie[0], "createfile") == 0)
     {
         createfile();
     }
-    // else if ()
-    // {
-    // }
+
+    else if(strcmp(command_tajzie[0], "exit") == 0)
+        return;
+
+    else
+    {
+        printf("Wrong command!\n");
+    }
 }
 
 int main()
@@ -153,7 +158,7 @@ int main()
         barrasi();
     }
 
-    printf("Have a good day!");
+    printf("Have a good day!\n");
 
     return 0;
 }
