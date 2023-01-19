@@ -37,6 +37,41 @@ void tajzieh()
         if (command[i] == '\0')
             return;
 
+        else if (command[i] == '\\')
+        {
+            if (command[i + 1] == 'n')
+            {
+                command_tajzie[k][j] = '\n';
+                i += 2;
+                j++;
+                continue;
+            }
+
+            else if (command[i + 1] == 't')
+            {
+                command_tajzie[k][j] = '\t';
+                i += 2;
+                j++;
+                continue;
+            }
+
+            else if (command[i + 1] == '"')
+            {
+                command_tajzie[k][j] = '"';
+                i += 2;
+                j++;
+                continue;
+            }
+
+            else if (command[i + 1] == '\\')
+            {
+                command_tajzie[k][j] = '\\';
+                i += 2;
+                j++;
+                continue;
+            }
+        }
+
         else if (command[i] == ' ')
         {
             if (command[i + 1] == '"')
@@ -132,6 +167,39 @@ void createfile()
     return;
 }
 
+void insertstr()
+{
+    DIR *folder;
+    char direction[500];
+    memset(direction, 0, 500);
+    strncpy(direction, command_tajzie[2], 3);
+
+    int i = 3;
+    while (command_tajzie[2][i] != '\0')
+    {
+        direction[i] = command_tajzie[2][i];
+        i++;
+
+        if (command_tajzie[2][i] == '/')
+        {
+            folder = opendir(direction);
+            if (folder)
+                closedir(folder);
+            else if (ENOENT == errno)
+            {
+                printf("Wrong address!\n");
+                return;
+            }
+        }
+    }
+
+    if (access(command_tajzie[2], F_OK) != 0)
+    {
+        printf("The file doesn't exists!\n");
+        return;
+    }
+}
+
 void barrasi()
 {
     if (strcmp(command_tajzie[0], "createfile") == 0)
@@ -139,7 +207,12 @@ void barrasi()
         createfile();
     }
 
-    else if(strcmp(command_tajzie[0], "exit") == 0)
+    else if (strcmp(command_tajzie[0], "insertstr") == 0)
+    {
+        insertstr();
+    }
+
+    else if (strcmp(command_tajzie[0], "exit") == 0)
         return;
 
     else
@@ -150,6 +223,8 @@ void barrasi()
 
 int main()
 {
+    printf("Hi, Enter your command.\nAnd for ending the procces, enter \"exit\".\n");
+
     while (strcmp(command, "exit"))
     {
         clear();
