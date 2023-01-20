@@ -11,16 +11,18 @@
 #include <dirent.h>
 #include <unistd.h>
 
-char command[500];
-char command_tajzie[20][500];
+#define MAX 500
+
+char command[MAX];
+char command_tajzie[20][MAX];
 
 void clear()
 {
-    memset(command, 0, 500);
+    memset(command, 0, MAX);
 
     for (int i = 0; i < 20; i++)
     {
-        memset(command_tajzie[i], 0, 500);
+        memset(command_tajzie[i], 0, MAX);
     }
 }
 
@@ -145,8 +147,8 @@ void createfile()
 
     else
     {
-        char direction[500];
-        memset(direction, 0, 500);
+        char direction[MAX];
+        memset(direction, 0, MAX);
         strncpy(direction, command_tajzie[2], 3);
 
         int i = 3;
@@ -169,9 +171,19 @@ void createfile()
 
 void insertstr()
 {
-    DIR *folder;
-    char direction[500];
-    memset(direction, 0, 500);
+    char direction[MAX];
+    char temp_copy_direction[MAX];
+    char temp_arr[MAX];
+    long line;
+    long char_pos;
+    long current_line = 1;
+    long current_char_pos = 0;
+    char *end_of_line_pos, *end_of_char_pos;
+
+    memset(direction, 0, MAX);
+    memset(temp_arr, 0, MAX);
+    memset(temp_copy_direction, 0, MAX);
+
     strncpy(direction, command_tajzie[2], 3);
 
     int i = 3;
@@ -182,7 +194,7 @@ void insertstr()
 
         if (command_tajzie[2][i] == '/')
         {
-            folder = opendir(direction);
+            DIR *folder = opendir(direction);
             if (folder)
                 closedir(folder);
             else if (ENOENT == errno)
@@ -193,11 +205,65 @@ void insertstr()
         }
     }
 
-    if (access(command_tajzie[2], F_OK) != 0)
+    if (access(direction, F_OK) != 0)
     {
         printf("The file doesn't exists!\n");
         return;
     }
+
+    strcat(strncat(temp_copy_direction, direction, strlen(direction) - 4), "_temp.txt");
+
+    FILE *temp_copy = fopen(temp_copy_direction, "w+");
+    FILE *file_to_be_written = fopen(direction, "r");
+
+    line = strtol(command_tajzie[6], &end_of_line_pos, 10);
+    char_pos = strtol(end_of_line_pos + 1, &end_of_char_pos, 10);
+
+    while (current_line < line)
+    {
+        fputs(fgets(temp_arr, MAX + 5, file_to_be_written), temp_copy);
+        current_line++;
+    }
+
+    while (current_char_pos < char_pos)
+    {
+        fputc(fgetc(file_to_be_written), temp_copy);
+        current_char_pos++;
+    }
+
+    for (int i = 0; i < strlen(command_tajzie[4]); i++)
+    {
+        fputc(command_tajzie[4][i], temp_copy);
+        current_char_pos++;
+        if (command_tajzie[4][i] == '\n')
+        {
+            current_line++;
+            current_char_pos = 0;
+        }
+    }
+
+    while (fgets(temp_arr, MAX + 5, file_to_be_written) !=  NULL)
+    {
+        fputs(temp_arr, temp_copy);
+    }
+
+    fclose(file_to_be_written);
+    fclose(temp_copy);
+
+    file_to_be_written = fopen(direction, "w");
+    temp_copy = fopen(temp_copy_direction, "r");
+    
+    while (fgets(temp_arr, MAX + 5, temp_copy) != NULL)
+    {
+        fputs(temp_arr, file_to_be_written);
+    }
+
+    fclose(temp_copy);
+    fclose(file_to_be_written);
+
+    remove(temp_copy_direction);
+
+    printf("Succesfully Insterted!\n");
 }
 
 void barrasi()
