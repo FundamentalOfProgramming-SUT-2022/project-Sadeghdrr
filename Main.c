@@ -279,6 +279,23 @@ void insertstr()
 
 void cat()
 {
+    char direction[MAX];
+    char print_str[MAX];
+    memset(direction, 0, MAX);
+    memset(print_str, 0, MAX);
+
+    strcat(direction, command_tajzie[2]);
+
+    FILE* file_to_be_read = fopen(direction, "r");
+
+    while (fgets(print_str, MAX + 5, file_to_be_read) !=  NULL)
+    {
+        printf("%s", print_str);
+    }
+
+    printf("\n");
+
+    fclose(file_to_be_read);
     
 }
 
