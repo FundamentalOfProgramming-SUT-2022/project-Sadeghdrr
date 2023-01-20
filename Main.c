@@ -137,6 +137,41 @@ void tajzieh()
     }
 }
 
+int check_existance()
+{
+    char direction[MAX];
+    memset(direction, 0, MAX);
+    
+    strncpy(direction, command_tajzie[2], 3);
+
+    int i = 3;
+    while (command_tajzie[2][i] != '\0')
+    {
+        direction[i] = command_tajzie[2][i];
+        i++;
+
+        if (command_tajzie[2][i] == '/')
+        {
+            DIR *folder = opendir(direction);
+            if (folder)
+                closedir(folder);
+            else if (ENOENT == errno)
+            {
+                printf("Wrong address!\n");
+                return 0;
+            }
+        }
+    }
+
+    if (access(direction, F_OK) != 0)
+    {
+        printf("The file doesn't exists!\n");
+        return 0;
+    }
+
+    return 1;
+}
+
 void createfile()
 {
     if (access(command_tajzie[2], F_OK) == 0)
@@ -184,32 +219,10 @@ void insertstr()
     memset(temp_arr, 0, MAX);
     memset(temp_copy_direction, 0, MAX);
 
-    strncpy(direction, command_tajzie[2], 3);
-
-    int i = 3;
-    while (command_tajzie[2][i] != '\0')
-    {
-        direction[i] = command_tajzie[2][i];
-        i++;
-
-        if (command_tajzie[2][i] == '/')
-        {
-            DIR *folder = opendir(direction);
-            if (folder)
-                closedir(folder);
-            else if (ENOENT == errno)
-            {
-                printf("Wrong address!\n");
-                return;
-            }
-        }
-    }
-
-    if (access(direction, F_OK) != 0)
-    {
-        printf("The file doesn't exists!\n");
+    if( !(check_existance()) ) 
         return;
-    }
+
+    strcat(direction, command_tajzie[2]);
 
     strcat(strncat(temp_copy_direction, direction, strlen(direction) - 4), "_temp.txt");
 
@@ -266,6 +279,11 @@ void insertstr()
     printf("Succesfully Insterted!\n");
 }
 
+void cat()
+{
+    
+}
+
 void barrasi()
 {
     if (strcmp(command_tajzie[0], "createfile") == 0)
@@ -276,6 +294,11 @@ void barrasi()
     else if (strcmp(command_tajzie[0], "insertstr") == 0)
     {
         insertstr();
+    }
+
+    else if(strcmp(command_tajzie[0], "cat") == 0)
+    {
+        cat();
     }
 
     else if (strcmp(command_tajzie[0], "exit") == 0)
