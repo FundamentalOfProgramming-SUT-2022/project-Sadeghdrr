@@ -141,7 +141,7 @@ int check_existance()
 {
     char direction[MAX];
     memset(direction, 0, MAX);
-    
+
     strncpy(direction, command_tajzie[2], 3);
 
     int i = 3;
@@ -174,6 +174,9 @@ int check_existance()
 
 void createfile()
 {
+    char direction[MAX];
+    memset(direction, 0, MAX);
+
     if (access(command_tajzie[2], F_OK) == 0)
     {
         printf("The file already exists and cannot be made again!\n");
@@ -182,8 +185,6 @@ void createfile()
 
     else
     {
-        char direction[MAX];
-        memset(direction, 0, MAX);
         strncpy(direction, command_tajzie[2], 3);
 
         int i = 3;
@@ -219,7 +220,6 @@ void insertstr()
     memset(temp_arr, 0, MAX);
     memset(temp_copy_direction, 0, MAX);
 
-
     strcat(direction, command_tajzie[2]);
 
     strcat(strncat(temp_copy_direction, direction, strlen(direction) - 4), "_temp.txt");
@@ -253,7 +253,7 @@ void insertstr()
         }
     }
 
-    while (fgets(temp_arr, MAX + 5, file_to_be_written) !=  NULL)
+    while (fgets(temp_arr, MAX + 5, file_to_be_written) != NULL)
     {
         fputs(temp_arr, temp_copy);
     }
@@ -263,7 +263,7 @@ void insertstr()
 
     file_to_be_written = fopen(direction, "w");
     temp_copy = fopen(temp_copy_direction, "r");
-    
+
     while (fgets(temp_arr, MAX + 5, temp_copy) != NULL)
     {
         fputs(temp_arr, file_to_be_written);
@@ -279,8 +279,8 @@ void insertstr()
 
 void cat()
 {
-    char direction[MAX];
     char print_str[MAX];
+    char direction[MAX];
     memset(direction, 0, MAX);
     memset(print_str, 0, MAX);
 
@@ -288,7 +288,7 @@ void cat()
 
     FILE* file_to_be_read = fopen(direction, "r");
 
-    while (fgets(print_str, MAX + 5, file_to_be_read) !=  NULL)
+    while (fgets(print_str, MAX + 5, file_to_be_read) != NULL)
     {
         printf("%s", print_str);
     }
@@ -296,7 +296,74 @@ void cat()
     printf("\n");
 
     fclose(file_to_be_read);
+}
+
+void removestr()
+{
+    char direction[MAX];
+    char temp_copy_direction[MAX];
+    char temp_arr[MAX];
+    long line;
+    long char_pos;
+    long size;
+    long current_line = 1;
+    long current_char_pos = 0;
+    char *end_of_line_pos, *end_of_char_pos, *end_of_size;
+
+    memset(direction, 0, MAX);
+    memset(temp_copy_direction, 0, MAX);
+
+    strcat(direction, command_tajzie[2]);
+    strcat(strncat(temp_copy_direction, direction, strlen(direction) - 4), "_temp.txt");
+
+    FILE *file_to_be_edited = fopen(direction, "r");
+    FILE *temp_copy = fopen(temp_copy_direction, "w");
+
+    line = strtol(command_tajzie[4], &end_of_line_pos, 10);
+    char_pos = strtol(end_of_line_pos + 1, &end_of_char_pos, 10);
+    size = strtol(command_tajzie[6], &end_of_size, 10);
+
+    while (current_line < line)
+    {
+        fputs(fgets(temp_arr, MAX + 5, file_to_be_edited), temp_copy);
+
+        current_line++;
+    }
+
+    while (current_char_pos < char_pos)
+    {
+        fputc(fgetc(file_to_be_edited), temp_copy);
+        current_char_pos++;
+    }
+
+    if (strcmp(command_tajzie[7], "-f") == 0)
+        fseek(file_to_be_edited, size, SEEK_CUR);
+    else
+        fseek(temp_copy, -size, SEEK_CUR);
     
+
+    while (fgets(temp_arr, MAX + 5, file_to_be_edited) != NULL)
+    {
+        fputs(temp_arr, temp_copy);
+    }
+
+    fclose(file_to_be_edited);
+    fclose(temp_copy);
+
+    file_to_be_edited = fopen(direction, "w");
+    temp_copy = fopen(temp_copy_direction, "r");
+
+    while (fgets(temp_arr, MAX + 5, temp_copy) != NULL)
+    {
+        fputs(temp_arr, file_to_be_edited);
+    }
+
+    fclose(file_to_be_edited);
+    fclose(temp_copy);
+
+    remove(temp_copy_direction);
+
+    printf("Succesfully removed!\n");
 }
 
 void barrasi()
@@ -308,14 +375,20 @@ void barrasi()
 
     else if (strcmp(command_tajzie[0], "insertstr") == 0)
     {
-        if(check_existance())
+        if (check_existance())
             insertstr();
     }
 
-    else if(strcmp(command_tajzie[0], "cat") == 0)
+    else if (strcmp(command_tajzie[0], "cat") == 0)
     {
-        if(check_existance())
+        if (check_existance())
             cat();
+    }
+
+    else if (strcmp(command_tajzie[0], "removestr") == 0)
+    {
+        if (check_existance())
+            removestr();
     }
 
     else if (strcmp(command_tajzie[0], "exit") == 0)
