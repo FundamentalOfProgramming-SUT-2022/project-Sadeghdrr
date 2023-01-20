@@ -219,8 +219,6 @@ void insertstr()
     memset(temp_arr, 0, MAX);
     memset(temp_copy_direction, 0, MAX);
 
-    if( !(check_existance()) ) 
-        return;
 
     strcat(direction, command_tajzie[2]);
 
@@ -293,12 +291,14 @@ void barrasi()
 
     else if (strcmp(command_tajzie[0], "insertstr") == 0)
     {
-        insertstr();
+        if(check_existance())
+            insertstr();
     }
 
     else if(strcmp(command_tajzie[0], "cat") == 0)
     {
-        cat();
+        if(check_existance())
+            cat();
     }
 
     else if (strcmp(command_tajzie[0], "exit") == 0)
