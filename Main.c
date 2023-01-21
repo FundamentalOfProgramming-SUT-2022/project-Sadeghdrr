@@ -16,6 +16,8 @@
 char command[MAX];
 char command_tajzie[20][MAX];
 char clipboard[MAX];
+char temp_clipboard[MAX];
+
 
 void clear()
 {
@@ -200,10 +202,7 @@ void createfile()
 
         FILE *file_to_be_made = fopen(direction, "w");
         fclose(file_to_be_made);
-        printf("File has successfully made!\n");
     }
-
-    return;
 }
 
 void insertstr()
@@ -219,9 +218,11 @@ void insertstr()
 
     memset(direction, 0, MAX);
     memset(temp_arr, 0, MAX);
+    memset(temp_clipboard, 0, MAX);
     memset(temp_copy_direction, 0, MAX);
 
     strcat(direction, command_tajzie[2]);
+    strcat(temp_clipboard, command_tajzie[4]);
 
     strcat(strncat(temp_copy_direction, direction, strlen(direction) - 4), "_temp.txt");
 
@@ -274,8 +275,6 @@ void insertstr()
     fclose(file_to_be_written);
 
     remove(temp_copy_direction);
-
-    printf("Succesfully Insterted!\n");
 }
 
 void cat()
@@ -312,6 +311,7 @@ void removestr()
     char *end_of_line_pos, *end_of_char_pos, *end_of_size;
 
     memset(direction, 0, MAX);
+    memset(temp_clipboard, 0, MAX);
     memset(temp_copy_direction, 0, MAX);
 
     strcat(direction, command_tajzie[2]);
@@ -337,12 +337,19 @@ void removestr()
     }
 
     if (strcmp(command_tajzie[7], "-f") == 0)
-        fseek(file_to_be_edited, size, SEEK_CUR);
+    {
+        for(int i=0; i<size; i++)
+        {
+            temp_clipboard[i] = fgetc(file_to_be_edited);
+        }
+    }
     else
     {
         fseek(temp_copy, -1 * size, SEEK_CUR);
+        fseek(file_to_be_edited, -1 * size, SEEK_CUR);
         for (int i = 0; i < size; i++)
         {
+            temp_clipboard[i] = fgetc(file_to_be_edited);
             fputc(0, temp_copy);
         }
         fseek(temp_copy, -1 * size, SEEK_CUR);
@@ -368,8 +375,6 @@ void removestr()
     fclose(temp_copy);
 
     remove(temp_copy_direction);
-
-    printf("Succesfully removed!\n");
 }
 
 void copystr()
@@ -416,25 +421,36 @@ void copystr()
     }
 
     fclose(file_to_be_copied);
-
-    printf("Text \"%s\" has been succesfully copied!\n", clipboard);
 }
 
 void cutstr()
 {
+    memset(clipboard, 0, MAX);
     copystr();
     removestr();
+}
+
+void pastestr()
+{
+    strcat(command_tajzie[6], command_tajzie[4]);
+    memset(command_tajzie[4], 0, MAX);
+    strcat(command_tajzie[4], clipboard);
+    insertstr();
 }
 
 void barrasi()
 {
     if (strcmp(command_tajzie[0], "createfile") == 0)
+    {
         createfile();
+        printf("File has successfully made!\n");
+    }
 
     else if (strcmp(command_tajzie[0], "insertstr") == 0)
     {
         if (check_existance())
             insertstr();
+        printf("Succesfully \"%s\" Insterted!\n", temp_clipboard);
     }
 
     else if (strcmp(command_tajzie[0], "cat") == 0)
@@ -447,22 +463,35 @@ void barrasi()
     {
         if (check_existance())
             removestr();
+        printf("Succesfully \"%s\" removed!\n", temp_clipboard);
     }
 
     else if (strcmp(command_tajzie[0], "copystr") == 0)
     {
         if (check_existance())
             copystr();
+        printf("Text \"%s\" has been succesfully copied!\n", clipboard);
     }
 
     else if(strcmp(command_tajzie[0], "cutstr") == 0)
     {
         if(check_existance())
             cutstr();
+        printf("Text \"%s\" has been succesfully cut!\n", clipboard);
+    }
+
+    else if(strcmp(command_tajzie[0], "pastestr") == 0)
+    {
+        if(check_existance())
+            pastestr();
+        printf("Text \"%s\" has been succesfully pasted!\n", clipboard);
     }
 
     else if (strcmp(command_tajzie[0], "exit") == 0)
+    {
+        printf("Have a good day!\n");
         return;
+    }
 
     else
         printf("Wrong command!\n");
@@ -479,8 +508,6 @@ int main()
         tajzieh();
         barrasi();
     }
-
-    printf("Have a good day!\n");
 
     return 0;
 }
