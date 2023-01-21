@@ -32,10 +32,6 @@ void tajzieh()
 
     while (true)
     {
-        command_tajzie[k][j] = command[i];
-        i++;
-        j++;
-
         if (command[i] == '\0')
             return;
 
@@ -133,7 +129,12 @@ void tajzieh()
             i++;
             j = 0;
             k++;
+            continue;
         }
+
+        command_tajzie[k][j] = command[i];
+        i++;
+        j++;
     }
 }
 
@@ -293,7 +294,7 @@ void cat()
         printf("%s", print_str);
     }
 
-    printf("\n");
+    putchar('\n');
 
     fclose(file_to_be_read);
 }
@@ -339,8 +340,14 @@ void removestr()
     if (strcmp(command_tajzie[7], "-f") == 0)
         fseek(file_to_be_edited, size, SEEK_CUR);
     else
-        fseek(temp_copy, -size, SEEK_CUR);
-    
+    {
+        fseek(temp_copy, -1*size, SEEK_CUR);
+        for(int i=0; i<size; i++)
+        {
+            fputc(0, temp_copy);
+        }
+        fseek(temp_copy, -1*size, SEEK_CUR);
+    }
 
     while (fgets(temp_arr, MAX + 5, file_to_be_edited) != NULL)
     {
