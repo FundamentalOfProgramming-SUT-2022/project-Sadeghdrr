@@ -420,6 +420,12 @@ void copystr()
     printf("Text \"%s\" has been succesfully copied!\n", clipboard);
 }
 
+void cutstr()
+{
+    copystr();
+    removestr();
+}
+
 void barrasi()
 {
     if (strcmp(command_tajzie[0], "createfile") == 0)
@@ -447,6 +453,12 @@ void barrasi()
     {
         if (check_existance())
             copystr();
+    }
+
+    else if(strcmp(command_tajzie[0], "cutstr") == 0)
+    {
+        if(check_existance())
+            cutstr();
     }
 
     else if (strcmp(command_tajzie[0], "exit") == 0)
