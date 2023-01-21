@@ -15,11 +15,11 @@
 
 char command[MAX];
 char command_tajzie[20][MAX];
+char clipboard[MAX];
 
 void clear()
 {
     memset(command, 0, MAX);
-
     for (int i = 0; i < 20; i++)
     {
         memset(command_tajzie[i], 0, MAX);
@@ -287,7 +287,7 @@ void cat()
 
     strcat(direction, command_tajzie[2]);
 
-    FILE* file_to_be_read = fopen(direction, "r");
+    FILE *file_to_be_read = fopen(direction, "r");
 
     while (fgets(print_str, MAX + 5, file_to_be_read) != NULL)
     {
@@ -327,7 +327,6 @@ void removestr()
     while (current_line < line)
     {
         fputs(fgets(temp_arr, MAX + 5, file_to_be_edited), temp_copy);
-
         current_line++;
     }
 
@@ -341,12 +340,12 @@ void removestr()
         fseek(file_to_be_edited, size, SEEK_CUR);
     else
     {
-        fseek(temp_copy, -1*size, SEEK_CUR);
-        for(int i=0; i<size; i++)
+        fseek(temp_copy, -1 * size, SEEK_CUR);
+        for (int i = 0; i < size; i++)
         {
             fputc(0, temp_copy);
         }
-        fseek(temp_copy, -1*size, SEEK_CUR);
+        fseek(temp_copy, -1 * size, SEEK_CUR);
     }
 
     while (fgets(temp_arr, MAX + 5, file_to_be_edited) != NULL)
@@ -373,12 +372,58 @@ void removestr()
     printf("Succesfully removed!\n");
 }
 
+void copystr()
+{
+    char direction[MAX];
+    char temp_arr[MAX];
+    long line;
+    long char_pos;
+    long size;
+    long current_line = 1;
+    long current_char_pos = 0;
+    char *end_of_line_pos, *end_of_char_pos, *end_of_size;
+
+    memset(direction, 0, MAX);
+    memset(clipboard, 0, MAX);
+    memset(temp_arr, 0, MAX);
+
+    strcat(direction, command_tajzie[2]);
+
+    FILE *file_to_be_copied = fopen(direction, "r");
+
+    line = strtol(command_tajzie[4], &end_of_line_pos, 10);
+    char_pos = strtol(end_of_line_pos + 1, &end_of_char_pos, 10);
+    size = strtol(command_tajzie[6], &end_of_size, 10);
+
+    while (current_line < line)
+    {
+        fgets(temp_arr, MAX + 5, file_to_be_copied);
+        current_line++;
+    }
+
+    while (current_char_pos < char_pos)
+    {
+        fgetc(file_to_be_copied);
+        current_char_pos++;
+    }
+
+    if (strcmp(command_tajzie[7], "-b") == 0)
+        fseek(file_to_be_copied, -1*size, SEEK_CUR);
+    
+    for(int i=0; i<size; i++)
+    {
+        clipboard[i] = fgetc(file_to_be_copied);
+    }
+
+    fclose(file_to_be_copied);
+
+    printf("Text \"%s\" has been succesfully copied!\n", clipboard);
+}
+
 void barrasi()
 {
     if (strcmp(command_tajzie[0], "createfile") == 0)
-    {
         createfile();
-    }
 
     else if (strcmp(command_tajzie[0], "insertstr") == 0)
     {
@@ -398,13 +443,17 @@ void barrasi()
             removestr();
     }
 
+    else if (strcmp(command_tajzie[0], "copystr") == 0)
+    {
+        if (check_existance())
+            copystr();
+    }
+
     else if (strcmp(command_tajzie[0], "exit") == 0)
         return;
 
     else
-    {
         printf("Wrong command!\n");
-    }
 }
 
 int main()
