@@ -12,7 +12,7 @@
 #include <unistd.h>
 
 #define MAX 1000
-#define ULTRA_MAX 1000000
+#define ULTRA_MAX 100000
 
 char command[MAX];
 char command_tajzie[20][MAX];
@@ -253,7 +253,7 @@ void remove_asterisk(char *search_string)
 
 void put_to_array(FILE *file, char *array)
 {
-    char temp;
+    char temp = fgetc(file);
     for (int i = 0; temp != EOF; i++)
     {
         *(array + i) = temp;
@@ -553,8 +553,8 @@ void find()
     char direction[MAX];
     char search_string[MAX];
     char whole_text[ULTRA_MAX];
-    char search_string_tajzie[MAX][MAX];
-    char whole_text_tajzie[MAX][MAX];
+    char search_string_tajzie[10][MAX];
+    char whole_text_tajzie[100][MAX];
     int all_repeats[MAX];
     int all_repeats_byword[MAX];
     int repeat_counter = 0;
@@ -572,9 +572,12 @@ void find()
     memset(whole_text, 0, ULTRA_MAX);
     memset(all_repeats, -1, MAX * sizeof(int));
     memset(all_repeats_byword, -1, MAX * sizeof(int));
-    for (int i = 0; i < MAX; i++)
+    for (int i = 0; i < 10; i++)
     {
         memset(search_string_tajzie[i], 0, MAX);
+    }
+    for (int i = 0; i < 50; i++)
+    {
         memset(whole_text_tajzie[i], 0, MAX);
     }
 
@@ -585,7 +588,7 @@ void find()
 
     for (int i = 0; i < strlen(search_string); i++)
     {
-        if (search_string[i] == '*' && search_string[i - 1] != '\\')
+        if ((search_string[i] == '*' && i == 0) || (search_string[i] == '*' && search_string[i - 1] != '\\'))
         {
             wildcard = true;
             break;
@@ -596,7 +599,6 @@ void find()
     {
         wild_card_pos = say_wild_pos(search_string);
         begin_astrisk = say_begin_astrisk(search_string);
-        remove_asterisk(search_string);
     }
 
     else
@@ -611,7 +613,7 @@ void find()
 
     if (wildcard)
     {
-        while (whole_text_tajzie[pos_by_word - 1][0] == '\0')
+        while (whole_text_tajzie[pos_by_word - 1][0] != '\0')
         {
             while (search_string_tajzie[current_word_pos_in_search - 1][0] != '\0')
             {
@@ -679,9 +681,9 @@ void find()
 
     else
     {
-        while (whole_text_tajzie[pos_by_word - 1][0] == '\0')
+        while (whole_text_tajzie[pos_by_word - 1][0] != '\0')
         {
-            while (search_string_tajzie[current_word_pos_in_search - 1][0] == '\0')
+            while (search_string_tajzie[current_word_pos_in_search - 1][0] != '\0')
             {
                 if (strcmp(whole_text_tajzie[current_word_pos_in_text - 1], search_string_tajzie[current_word_pos_in_search - 1]) != 0)
                 {
@@ -755,6 +757,7 @@ void find()
             {
                 printf("%d ", all_repeats_byword[i]);
             }
+            printf("\n");
         }
     }
 
@@ -838,6 +841,8 @@ void find()
             {
                 printf("%d ", all_repeats[i]);
             }
+
+            printf("\n");
 
             return;
         }
