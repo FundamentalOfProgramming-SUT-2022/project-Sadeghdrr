@@ -281,6 +281,17 @@ void tajzieh_string(const char string[], char save_string[][MAX])
     }
 }
 
+void swap(char* first, char *seccond)
+{
+    char temp;
+    for(int i=0; i<MAX; i++)
+    {
+        temp = *(first + i);
+        *(first + i) = *(seccond + i);
+        *(seccond + i) = temp;
+    }
+}
+
 // -------------------------------------------------------------------------------------------------------------------------------------
 
 void createfile()
@@ -819,9 +830,10 @@ void find()
         while (all_repeats[i] != -1)
         {
             tedad_repeatation++;
+            i++;
         }
 
-        printf("The count of repeatation is \"%d\".\n");
+        printf("The count of repeatation is \"%d\".\n", tedad_repeatation);
         return;
     }
 
@@ -850,7 +862,7 @@ void find()
 
     else
     {
-        printf("Not a accessable combination!");
+        printf("Not a accessable combination!\n");
         return;
     }
 }
@@ -915,6 +927,8 @@ void barrasi()
 
     else if (strcmp(command_tajzie[0], "find") == 0)
     {
+        swap(command_tajzie[1], command_tajzie[3]);
+        swap(command_tajzie[2], command_tajzie[4]);
         if (check_existance())
             find();
     }
