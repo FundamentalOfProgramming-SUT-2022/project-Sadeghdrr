@@ -292,9 +292,34 @@ void swap(char *first, char *seccond)
     }
 }
 
+void undo_backup()
+{
+    char whole_text_backup[ULTRA_MAX];
+    char backuped_file_direction[MAX];
+
+    memset(whole_text_backup, 0, ULTRA_MAX);
+    memset(backuped_file_direction, 0, MAX);
+
+    strcat(backuped_file_direction, command_tajzie[2]);
+    backuped_file_direction[3] = 'u';
+    backuped_file_direction[4] = 'n';
+    backuped_file_direction[5] = 'd';
+    backuped_file_direction[6] = 'o';
+
+    FILE *file_to_be_backuped = fopen(command_tajzie[2], "r");
+    FILE *backuped_file = fopen(backuped_file_direction, "w");
+
+    put_to_array(file_to_be_backuped, whole_text_backup);
+
+    fputs(whole_text_backup, backuped_file);
+
+    fclose(file_to_be_backuped);
+    fclose(backuped_file);
+}
+
 // -------------------------------------------------------------------------------------------------------------------------------------
 
-void createfile()
+void createfile(bool undo)
 {
     char direction[MAX];
     memset(direction, 0, MAX);
@@ -319,10 +344,11 @@ void createfile()
                 mkdir(direction);
         }
 
-        FILE *file_to_be_made = fopen(direction, "w");
+        FILE *file_to_be_made = fopen(direction, "a");
         fclose(file_to_be_made);
 
-        printf("File has successfully made!\n");
+        if (!undo)
+            printf("File has successfully made!\n");
     }
 }
 
@@ -1382,17 +1408,54 @@ int grep(int condition)
     return c_option_counter;
 }
 
+void undo()
+{
+    char whole_text_of_backuped_file[ULTRA_MAX];
+    char backuped_file_direction[MAX];
+
+    memset(whole_text_of_backuped_file, 0, ULTRA_MAX);
+    memset(backuped_file_direction, 0, MAX);
+
+    strcat(backuped_file_direction, command_tajzie[2]);
+    backuped_file_direction[3] = 'u';
+    backuped_file_direction[4] = 'n';
+    backuped_file_direction[5] = 'd';
+    backuped_file_direction[6] = 'o';
+
+    FILE *file_to_be_undone = fopen(command_tajzie[2], "w");
+    FILE *backuped_file = fopen(backuped_file_direction, "r");
+
+    put_to_array(backuped_file, whole_text_of_backuped_file);
+
+    fputs(whole_text_of_backuped_file, file_to_be_undone);
+
+    fclose(file_to_be_undone);
+    fclose(backuped_file);
+}
+
 void barrasi()
 {
     if (strcmp(command_tajzie[0], "createfile") == 0)
     {
-        createfile();
+        bool undo = false;
+
+        createfile(undo);
+
+        command_tajzie[2][3] = 'u';
+        command_tajzie[2][4] = 'n';
+        command_tajzie[2][5] = 'd';
+        command_tajzie[2][6] = 'o';
+
+        undo = true;
+
+        createfile(undo);
     }
 
     else if (strcmp(command_tajzie[0], "insertstr") == 0)
     {
         if (check_existance())
         {
+            undo_backup();
             insertstr();
             printf("Succesfully \"%s\" Insterted!\n", temp_clipboard);
         }
@@ -1401,13 +1464,17 @@ void barrasi()
     else if (strcmp(command_tajzie[0], "cat") == 0)
     {
         if (check_existance())
+        {
+            undo_backup();
             cat();
+        }
     }
 
     else if (strcmp(command_tajzie[0], "removestr") == 0)
     {
         if (check_existance())
         {
+            undo_backup();
             removestr();
             printf("Succesfully \"%s\" removed!\n", temp_clipboard);
         }
@@ -1417,6 +1484,7 @@ void barrasi()
     {
         if (check_existance())
         {
+            undo_backup();
             copystr();
             printf("Text \"%s\" has been succesfully copied!\n", clipboard);
         }
@@ -1426,6 +1494,7 @@ void barrasi()
     {
         if (check_existance())
         {
+            undo_backup();
             cutstr();
             printf("Text \"%s\" has been succesfully cut!\n", clipboard);
         }
@@ -1435,6 +1504,7 @@ void barrasi()
     {
         if (check_existance())
         {
+            undo_backup();
             pastestr();
             printf("Text \"%s\" has been succesfully pasted!\n", clipboard);
         }
@@ -1445,7 +1515,10 @@ void barrasi()
         swap(command_tajzie[1], command_tajzie[3]);
         swap(command_tajzie[2], command_tajzie[4]);
         if (check_existance())
+        {
+            undo_backup();
             find();
+        }
     }
 
     else if (strcmp(command_tajzie[0], "replace") == 0)
@@ -1456,8 +1529,12 @@ void barrasi()
         swap(command_tajzie[4], command_tajzie[6]);
         swap(command_tajzie[5], command_tajzie[7]);
         swap(command_tajzie[6], command_tajzie[8]);
+
         if (check_existance())
+        {
+            undo_backup();
             replace();
+        }
     }
 
     else if (strcmp(command_tajzie[0], "grep") == 0)
@@ -1502,6 +1579,8 @@ void barrasi()
 
             if (check_existance())
             {
+                undo_backup();
+
                 if (no_option)
                 {
                     temp_bin = grep(0);
@@ -1523,6 +1602,12 @@ void barrasi()
 
         if (c_option)
             printf("There is \"%d\" lines that have \"%s\".\n", sum_for_c_option, command_tajzie[4]);
+    }
+
+    else if(strcmp(command_tajzie[0], "undo") == 0)
+    {
+        if(check_existance())
+            undo();
     }
 
     else if (strcmp(command_tajzie[0], "exit") == 0)
