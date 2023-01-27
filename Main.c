@@ -165,7 +165,7 @@ int check_existance()
                 closedir(folder);
             else if (ENOENT == errno)
             {
-                printf("Wrong address!\n");
+                printf("The \"%s\" is a wrong address!\n", direction);
                 return 0;
             }
         }
@@ -173,7 +173,7 @@ int check_existance()
 
     if (access(direction, F_OK) != 0)
     {
-        printf("The file doesn't exists!\n");
+        printf("The \"%s\" file doesn't exists!\n", direction);
         return 0;
     }
 
@@ -1265,7 +1265,7 @@ void replace()
                 for (int i = all_repeats[x] - deleted_counter, j = 0; current_word <= word_counter; i++, j++)
                 {
                     removing_string[j] = whole_text[i];
-                    if (whole_text[i + 1] == ' '  ||  whole_text[i + 1] == '\n'  ||  whole_text[i + 1] == '\0')
+                    if (whole_text[i + 1] == ' ' || whole_text[i + 1] == '\n' || whole_text[i + 1] == '\0')
                         current_word++;
                 }
 
@@ -1325,6 +1325,61 @@ void replace()
         printf("Not a accessable combination!\n");
         return;
     }
+}
+
+int grep(int condition)
+{
+    char direction[MAX];
+    char temp_arr[MAX];
+    char search_string[MAX];
+    int c_option_counter = 0;
+
+    memset(direction, 0, MAX);
+    memset(temp_arr, 0, MAX);
+    memset(search_string, 0, MAX);
+
+    strcat(direction, command_tajzie[2]);
+    strcat(search_string, command_tajzie[4]);
+
+    FILE *file_to_seeked = fopen(direction, "r");
+
+    // no_option
+    if (condition == 0)
+    {
+        while (fgets(temp_arr, MAX + 5, file_to_seeked) != NULL)
+        {
+            if (strstr(temp_arr, search_string) != NULL)
+            {
+                printf("%s: %s", direction, temp_arr);
+
+                if (temp_arr[strlen(temp_arr) - 1] != '\n')
+                    printf("\n");
+            }
+        }
+    }
+
+    // c_option
+    else if (condition == 1)
+    {
+        while (fgets(temp_arr, MAX + 5, file_to_seeked) != NULL)
+        {
+            if (strstr(temp_arr, search_string) != NULL)
+                c_option_counter++;
+        }
+    }
+
+    // l_option
+    else if (condition == 2)
+    {
+        while (fgets(temp_arr, MAX + 5, file_to_seeked) != NULL)
+        {
+            if (strstr(temp_arr, search_string) != NULL)
+                printf("%s\n", direction);
+        }
+    }
+
+    fclose(file_to_seeked);
+    return c_option_counter;
 }
 
 void barrasi()
@@ -1403,6 +1458,71 @@ void barrasi()
         swap(command_tajzie[6], command_tajzie[8]);
         if (check_existance())
             replace();
+    }
+
+    else if (strcmp(command_tajzie[0], "grep") == 0)
+    {
+        int i;
+        int temp_bin;
+        int sum_for_c_option = 0;
+        bool no_option = false;
+        bool c_option = false;
+        bool l_option = false;
+
+        if (strcmp(command_tajzie[1], "--str") == 0)
+        {
+            i = 4;
+            no_option = true;
+            swap(command_tajzie[1], command_tajzie[3]);
+        }
+
+        else if (strcmp(command_tajzie[1], "-c") == 0)
+        {
+            i = 5;
+            c_option = true;
+            memset(command_tajzie[1], 0, MAX);
+            swap(command_tajzie[4], command_tajzie[1]);
+            swap(command_tajzie[3], command_tajzie[4]);
+            swap(command_tajzie[2], command_tajzie[3]);
+        }
+
+        else
+        {
+            i = 5;
+            l_option = true;
+            memset(command_tajzie[1], 0, MAX);
+            swap(command_tajzie[4], command_tajzie[1]);
+            swap(command_tajzie[3], command_tajzie[4]);
+            swap(command_tajzie[2], command_tajzie[3]);
+        }
+
+        while (command_tajzie[i][0] != 0)
+        {
+            swap(command_tajzie[2], command_tajzie[i]);
+
+            if (check_existance())
+            {
+                if (no_option)
+                {
+                    temp_bin = grep(0);
+                }
+
+                else if (c_option)
+                {
+                    sum_for_c_option += grep(1);
+                }
+
+                else if (l_option)
+                {
+                    temp_bin = grep(2);
+                }
+            }
+
+            i++;
+        }
+
+        if (c_option)
+            printf("There is \"%d\" lines that have \"%s\".\n", sum_for_c_option, command_tajzie[4]);
     }
 
     else if (strcmp(command_tajzie[0], "exit") == 0)
