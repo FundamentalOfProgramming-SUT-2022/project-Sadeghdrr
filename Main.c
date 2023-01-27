@@ -931,8 +931,6 @@ void replace()
     tajzieh_string(whole_text, whole_text_tajzie);
     tajzieh_string(search_string, search_string_tajzie);
 
-    fclose(file_to_be_seeked);
-
     if (wildcard)
     {
         while (whole_text_tajzie[pos_by_word - 1][0] != '\0')
@@ -1114,11 +1112,11 @@ void replace()
 
             insertstr();
 
-            printf("The part has been succesfully replaced!");
+            printf("The part has been succesfully replaced!\n");
         }
     }
 
-    else if (strcmp(command_tajzie[5], "-at") == 0)
+    else if (strcmp(command_tajzie[5], "-at") == 0 && strcmp(command_tajzie[9], "-all") != 0)
     {
         long at_index;
         char *end_of_at_index;
@@ -1176,6 +1174,7 @@ void replace()
 
             size_for_removing = strlen(removing_string);
 
+            memset(command_tajzie[9], 0, MAX);
             strcat(command_tajzie[9], "--pos");
             sprintf(temp, "%d:%d", line_pos, char_pos);
             strcat(command_tajzie[10], temp);
@@ -1204,11 +1203,11 @@ void replace()
 
             insertstr();
 
-            printf("The part has been succesfully replaced!");
+            printf("The part has been succesfully replaced!\n");
         }
     }
 
-    else if (strcmp(command_tajzie[5], "-all") == 0)
+    else if (strcmp(command_tajzie[5], "-all") == 0 && strcmp(command_tajzie[6], "-at") != 0)
     {
         if (all_repeats_byword[0] == -1)
         {
@@ -1223,11 +1222,10 @@ void replace()
             int char_pos = 0;
             int current_word = 1;
             int word_counter = 1;
+            int deleted_counter = 0;
             char removing_string[MAX];
             char temp[MAX];
             int size_for_removing;
-
-            memset(temp, 0, MAX);
 
             for (int i = 0; search_string[i] != '\0'; i++)
             {
@@ -1235,9 +1233,18 @@ void replace()
                     word_counter++;
             }
 
-            for (int x = 0; all_repeats_byword[x] != '\0'; x++)
+            for (int x = 0; all_repeats_byword[x] != -1; x++)
             {
+                current_word = 1;
+                line_pos = 1;
+                char_pos = 0;
+
                 memset(removing_string, 0, MAX);
+                memset(whole_text, 0, ULTRA_MAX);
+                memset(temp, 0, MAX);
+
+                fseek(file_to_be_seeked, 0, SEEK_SET);
+                put_to_array(file_to_be_seeked, whole_text);
 
                 for (int i = 0; current_word < all_repeats_byword[x]; i++)
                 {
@@ -1255,24 +1262,29 @@ void replace()
 
                 current_word = 1;
 
-                for (int i = all_repeats[x], j = 0; current_word <= word_counter; i++, j++)
+                for (int i = all_repeats[x] - deleted_counter, j = 0; current_word <= word_counter; i++, j++)
                 {
                     removing_string[j] = whole_text[i];
-                    if (whole_text[i + 1] == ' ')
+                    if (whole_text[i + 1] == ' '  ||  whole_text[i + 1] == '\n'  ||  whole_text[i + 1] == '\0')
                         current_word++;
                 }
 
                 size_for_removing = strlen(removing_string);
 
+                memset(command_tajzie[9], 0, MAX);
+                memset(command_tajzie[10], 0, MAX);
                 strcat(command_tajzie[9], "--pos");
                 sprintf(temp, "%d:%d", line_pos, char_pos);
                 strcat(command_tajzie[10], temp);
 
-                strcat(command_tajzie[11], "-size");
+                memset(command_tajzie[11], 0, MAX);
+                memset(command_tajzie[12], 0, MAX);
                 memset(temp, 0, MAX);
+                strcat(command_tajzie[11], "-size");
                 sprintf(temp, "%d", size_for_removing);
                 strcat(command_tajzie[12], temp);
 
+                memset(command_tajzie[13], 0, MAX);
                 strcat(command_tajzie[13], "-f");
 
                 swap(command_tajzie[3], command_tajzie[9]);
@@ -1292,14 +1304,26 @@ void replace()
 
                 insertstr();
 
+                deleted_counter = size_for_removing - strlen(command_tajzie[4]);
+
                 swap(command_tajzie[9], command_tajzie[3]);
                 swap(command_tajzie[10], command_tajzie[4]);
                 swap(command_tajzie[11], command_tajzie[5]);
                 swap(command_tajzie[12], command_tajzie[6]);
-                swap(command_tajzie[13], command_tajzie[9]);
-                swap(command_tajzie[14], command_tajzie[10]);
+                swap(command_tajzie[9], command_tajzie[7]);
+                swap(command_tajzie[10], command_tajzie[8]);
             }
+
+            printf("The part has been succesfully replaced!\n");
+
+            fclose(file_to_be_seeked);
         }
+    }
+
+    else
+    {
+        printf("Not a accessable combination!\n");
+        return;
     }
 }
 
