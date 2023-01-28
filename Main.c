@@ -145,7 +145,7 @@ void tajzieh()
     }
 }
 
-int check_existance()
+bool check_existance()
 {
     char direction[MAX];
     memset(direction, 0, MAX);
@@ -166,7 +166,7 @@ int check_existance()
             else if (ENOENT == errno)
             {
                 printf("The \"%s\" is a wrong address!\n", direction);
-                return 0;
+                return false;
             }
         }
     }
@@ -174,10 +174,10 @@ int check_existance()
     if (access(direction, F_OK) != 0)
     {
         printf("The \"%s\" file doesn't exists!\n", direction);
-        return 0;
+        return false;
     }
 
-    return 1;
+    return true;
 }
 
 int say_wild_pos(const char *search_string)
@@ -315,6 +315,103 @@ void undo_backup()
 
     fclose(file_to_be_backuped);
     fclose(backuped_file);
+}
+
+bool brace_counter()
+{
+    int brace_difference = 0;
+    char whole_text[ULTRA_MAX];
+
+    memset(whole_text, 0, ULTRA_MAX);
+
+    FILE *file_to_be_edited = fopen(command_tajzie[2], "r");
+    put_to_array(file_to_be_edited, whole_text);
+    fclose(file_to_be_edited);
+
+    for (int i = 0; whole_text[i] != '\0'; i++)
+    {
+        if (whole_text[i] == '{')
+            brace_difference++;
+        else if (whole_text[i] == '}')
+            brace_difference--;
+    }
+
+    if (brace_difference == 0)
+        return true;
+    else
+    {
+        printf("The braces in text aren't equal!\n");
+        return false;
+    }
+}
+
+void clean(char *whole_text)
+{
+    char cleaned_whole_text[ULTRA_MAX];
+    memset(cleaned_whole_text, 0, ULTRA_MAX);
+
+    for (int i = 0, j = 0; whole_text[i] != '\0'; i++, j++)
+    {
+        if (isspace(whole_text[i]))
+        {
+            int k = i;
+            while (isspace(whole_text[k]))
+            {
+                k++;
+            }
+
+            if (whole_text[k] == '{')
+            {
+                k++;
+
+                cleaned_whole_text[j] = ' ';
+                cleaned_whole_text[++j] = '{';
+
+                if (isspace(whole_text[k]))
+                {
+                    while (isspace(whole_text[k]))
+                    {
+                        k++;
+                    }
+
+                    cleaned_whole_text[++j] = whole_text[k];
+                }
+
+                else
+                {
+                    cleaned_whole_text[++j] = whole_text[k];
+                }
+
+                i = k;
+
+                continue;
+            }
+
+            else
+            {
+                while (i < k)
+                {
+                    cleaned_whole_text[j++] = whole_text[i++];
+                }
+                cleaned_whole_text[j] = whole_text[i];
+
+                continue;
+            }
+        }
+
+        else if (whole_text[i] == '{'  &&  whole_text[i - 1] != '{'  &&  whole_text[i - 1] != '}')
+        {
+            cleaned_whole_text[j] = ' ';
+            cleaned_whole_text[++j] = '{';
+
+            continue;
+        }
+
+        cleaned_whole_text[j] = whole_text[i];
+    }
+
+    memset(whole_text, 0, ULTRA_MAX);
+    strcat(whole_text, cleaned_whole_text);
 }
 
 // -------------------------------------------------------------------------------------------------------------------------------------
@@ -1431,6 +1528,89 @@ void undo()
 
     fclose(file_to_be_undone);
     fclose(backuped_file);
+
+    printf("The changes has been undone!\n");
+}
+
+void auto_indent()
+{
+    char whole_text[ULTRA_MAX];
+    char whole_text_indented[ULTRA_MAX];
+    int tab_counter = 0;
+
+    memset(whole_text, 0, ULTRA_MAX);
+    memset(whole_text_indented, 0, ULTRA_MAX);
+
+    FILE *file_to_be_edited = fopen(command_tajzie[2], "r");
+    put_to_array(file_to_be_edited, whole_text);
+    fclose(file_to_be_edited);
+
+    clean(whole_text);
+
+    for (int i = 0, j = 0; whole_text[i] != '\0'; i++, j++)
+    {
+        if (whole_text[i] == '{')
+        {
+            whole_text_indented[j] = '{';
+            whole_text_indented[++j] = '\n';
+
+            tab_counter++;
+
+            for (int k = 0; k < tab_counter; k++)
+            {
+                whole_text_indented[++j] = '\t';
+            }
+
+            continue;
+        }
+
+        else if (whole_text[i] == '}')
+        {
+            tab_counter--;
+
+            int k = i - 1;
+            while (isspace(whole_text[k]))
+            {
+                k--;
+            }
+
+            if (whole_text[k] != '}')
+            {
+                whole_text_indented[j] = '\n';
+                for (int k = 0; k < tab_counter; k++)
+                {
+                    whole_text_indented[++j] = '\t';
+                }
+                whole_text_indented[++j] = '}';
+                whole_text_indented[++j] = '\n';
+                for (int k = 0; k < tab_counter; k++)
+                {
+                    whole_text_indented[++j] = '\t';
+                }
+            }
+
+            else
+            {
+                whole_text_indented[--j] = '}';
+                whole_text_indented[++j] = '\n';
+
+                for (int k = 0; k < tab_counter; k++)
+                {
+                    whole_text_indented[++j] = '\t';
+                }
+            }
+
+            continue;
+        }
+
+        whole_text_indented[j] = whole_text[i];
+    }
+
+    file_to_be_edited = fopen(command_tajzie[2], "w");
+    fputs(whole_text_indented, file_to_be_edited);
+    fclose(file_to_be_edited);
+
+    printf("File has been succesfully edited!\n");
 }
 
 void barrasi()
@@ -1604,10 +1784,19 @@ void barrasi()
             printf("There is \"%d\" lines that have \"%s\".\n", sum_for_c_option, command_tajzie[4]);
     }
 
-    else if(strcmp(command_tajzie[0], "undo") == 0)
+    else if (strcmp(command_tajzie[0], "undo") == 0)
     {
-        if(check_existance())
+        if (check_existance())
             undo();
+    }
+
+    else if (strcmp(command_tajzie[0], "auto-indent") == 0)
+    {
+        if (check_existance() && brace_counter())
+        {
+            undo_backup();
+            auto_indent();
+        }
     }
 
     else if (strcmp(command_tajzie[0], "exit") == 0)
