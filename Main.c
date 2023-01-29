@@ -399,7 +399,7 @@ void clean(char *whole_text)
             }
         }
 
-        else if (whole_text[i] == '{'  &&  whole_text[i - 1] != '{'  &&  whole_text[i - 1] != '}')
+        else if (whole_text[i] == '{' && whole_text[i - 1] != '{' && whole_text[i - 1] != '}')
         {
             cleaned_whole_text[j] = ' ';
             cleaned_whole_text[++j] = '{';
@@ -412,6 +412,27 @@ void clean(char *whole_text)
 
     memset(whole_text, 0, ULTRA_MAX);
     strcat(whole_text, cleaned_whole_text);
+}
+
+int line_counter(char *direction)
+{
+    int lines = 1;
+
+    FILE *file = fopen(direction, "r");
+
+    char tmp = fgetc(file);
+
+    while (tmp != EOF)
+    {
+        if (tmp == '\n')
+            lines++;
+
+        tmp = fgetc(file);
+    }
+
+    fclose(file);
+
+    return lines;
 }
 
 // -------------------------------------------------------------------------------------------------------------------------------------
@@ -1613,6 +1634,63 @@ void auto_indent()
     printf("File has been succesfully edited!\n");
 }
 
+void compare(int file1_lines_num, int file2_lines_num)
+{
+    char file1_line[MAX];
+    char file2_line[MAX];
+    int current_line = 1;
+
+    memset(file1_line, 0, MAX);
+    memset(file2_line, 0, MAX);
+
+    FILE *file1 = fopen(command_tajzie[2], "r");
+    FILE *file2 = fopen(command_tajzie[3], "r");
+
+    while ((fgets(file1_line, MAX + 5, file1) != NULL) && (fgets(file2_line, MAX + 5, file2) != NULL))
+    {
+        if (strcmp(file1_line, file2_line))
+        {
+            printf("=============== #%d ===============\n", current_line);
+
+            if (current_line == file1_lines_num)
+                printf("%s\n%s\n", file1_line, file2_line);
+            else if(current_line == file2_lines_num)
+                printf("%s%s\n\n", file1_line, file2_line);
+            else
+                printf("%s%s\n", file1_line, file2_line);
+        }
+
+        current_line++;
+    }
+
+    if ((file1_lines_num - file2_lines_num) > 0)
+    {
+        printf("<<<<<<<<<<<<<<< #%d - #%d >>>>>>>>>>>>>>>\n", current_line, file1_lines_num);
+
+        do
+        {
+            printf("%s", file1_line);
+        } while (fgets(file1_line, MAX + 5, file1) != NULL);
+
+        printf("\n\n");
+    }
+
+    else if ((file1_lines_num - file2_lines_num) < 0)
+    {
+        printf(">>>>>>>>>>>>>>> #%d - #%d <<<<<<<<<<<<<<<\n", current_line, file2_lines_num);
+
+        while (fgets(file2_line, MAX + 5, file2) != NULL)
+        {
+            printf("%s", file2_line);
+        }
+
+        printf("\n\n");
+    }
+
+    fclose(file1);
+    fclose(file2);
+}
+
 void barrasi()
 {
     if (strcmp(command_tajzie[0], "createfile") == 0)
@@ -1796,6 +1874,23 @@ void barrasi()
         {
             undo_backup();
             auto_indent();
+        }
+    }
+
+    else if (strcmp(command_tajzie[0], "compare") == 0)
+    {
+        if (check_existance())
+        {
+            undo_backup();
+            swap(command_tajzie[2], command_tajzie[3]);
+
+            if (check_existance())
+            {
+                undo_backup();
+                swap(command_tajzie[3], command_tajzie[2]);
+
+                compare(line_counter(command_tajzie[2]), line_counter(command_tajzie[3]));
+            }
         }
     }
 
