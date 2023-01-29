@@ -5,10 +5,10 @@
 #include <errno.h>
 #include <conio.h>
 #include <dir.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <windows.h>
 #include <dirent.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <windows.h>
 #include <unistd.h>
 
 #define MAX 1000
@@ -1654,7 +1654,7 @@ void compare(int file1_lines_num, int file2_lines_num)
 
             if (current_line == file1_lines_num)
                 printf("%s\n%s\n", file1_line, file2_line);
-            else if(current_line == file2_lines_num)
+            else if (current_line == file2_lines_num)
                 printf("%s%s\n\n", file1_line, file2_line);
             else
                 printf("%s%s\n", file1_line, file2_line);
@@ -1689,6 +1689,78 @@ void compare(int file1_lines_num, int file2_lines_num)
 
     fclose(file1);
     fclose(file2);
+}
+
+void full_tree(char *current_path, int current_depth)
+{
+    char next_path[MAX];
+    memset(next_path, 0, MAX);
+
+    struct dirent *current_object;
+    DIR *folder = opendir(current_path);
+
+    if (!folder)
+        return;
+
+    while ((current_object = readdir(folder)) != NULL)
+    {
+        if (strcmp(current_object->d_name, ".") && strcmp(current_object->d_name, ".."))
+        {
+            for (int i = 0; i < 2 * current_depth; i++)
+            {
+                if (i % 2 == 0)
+                    printf("%c", 179);
+                else
+                    printf(" ");
+            }
+
+            printf("%c%c%c %s\n", 195, 196, 196, current_object->d_name);
+
+            strcpy(next_path, current_path);
+            strcat(next_path, "/");
+            strcat(next_path, current_object->d_name);
+
+            full_tree(next_path, current_depth + 1);
+        }
+    }
+
+    closedir(folder);
+}
+
+void tree(char *current_path, int current_depth, int final_depth)
+{
+    char next_path[MAX];
+    memset(next_path, 0, MAX);
+
+    struct dirent *current_object;
+    DIR *folder = opendir(current_path);
+
+    if (!folder || current_depth == final_depth)
+        return;
+
+    while ((current_object = readdir(folder)) != NULL)
+    {
+        if (strcmp(current_object->d_name, ".") && strcmp(current_object->d_name, ".."))
+        {
+            for (int i = 0; i < 2 * current_depth; i++)
+            {
+                if (i % 2 == 0)
+                    printf("%c", 179);
+                else
+                    printf(" ");
+            }
+
+            printf("%c%c%c %s\n", 195, 196, 196, current_object->d_name);
+
+            strcpy(next_path, current_path);
+            strcat(next_path, "/");
+            strcat(next_path, current_object->d_name);
+
+            tree(next_path, current_depth + 1, final_depth);
+        }
+    }
+
+    closedir(folder);
 }
 
 void barrasi()
@@ -1892,6 +1964,34 @@ void barrasi()
                 compare(line_counter(command_tajzie[2]), line_counter(command_tajzie[3]));
             }
         }
+    }
+
+    else if (strcmp(command_tajzie[0], "tree") == 0)
+    {
+        long depth;
+        char *end_of_depth;
+        depth = strtol(command_tajzie[1], &end_of_depth, 10);
+
+        if (depth < -1)
+        {
+            printf("Invalid depth!\n");
+            return;
+        }
+        else if (depth == 0)
+        {
+            printf("\n");
+            return;
+        }
+        else if (depth == -1)
+        {
+            full_tree("../root", 0);
+        }
+        else
+        {
+            tree("../root", 0, depth);
+        }
+
+        printf("\n");
     }
 
     else if (strcmp(command_tajzie[0], "exit") == 0)
