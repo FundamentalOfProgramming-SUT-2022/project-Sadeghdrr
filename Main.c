@@ -932,7 +932,7 @@ void find()
     }
 
     // simple
-    else if (command_tajzie[5][0] == '\0')
+    else if (command_tajzie[5][0] == '\0' || command_tajzie[5][0] == '=')
     {
         if (all_repeats_byword[0] == -1)
         {
@@ -949,7 +949,7 @@ void find()
         }
     }
 
-    else if (strcmp(command_tajzie[5], "-at") == 0 && command_tajzie[7][0] == '\0')
+    else if (strcmp(command_tajzie[5], "-at") == 0 && (command_tajzie[7][0] == '\0' || command_tajzie[7][0] == '='))
     {
         long at_index;
         char *end_of_at_index;
@@ -971,7 +971,7 @@ void find()
         }
     }
 
-    else if (strcmp(command_tajzie[5], "-byword") == 0 && command_tajzie[6][0] == '\0')
+    else if (strcmp(command_tajzie[5], "-byword") == 0 && (command_tajzie[6][0] == '\0' || command_tajzie[6][0] == '='))
     {
         if (all_repeats_byword[0] == -1)
         {
@@ -987,7 +987,7 @@ void find()
         }
     }
 
-    else if (strcmp(command_tajzie[5], "-count") == 0 && command_tajzie[6][0] == '\0')
+    else if (strcmp(command_tajzie[5], "-count") == 0 && (command_tajzie[6][0] == '\0' || command_tajzie[6][0] == '='))
     {
         int tedad_repeatation = 0;
         int i = 0;
@@ -1003,7 +1003,7 @@ void find()
         return;
     }
 
-    else if (strcmp(command_tajzie[5], "-all") == 0 && command_tajzie[6][0] == '\0')
+    else if (strcmp(command_tajzie[5], "-all") == 0 && (command_tajzie[6][0] == '\0' || command_tajzie[6][0] == '='))
     {
         if (all_repeats[0] == -1)
         {
@@ -1546,6 +1546,7 @@ int grep(int condition)
             {
                 sprintf(temp, "%s\n", direction);
                 strcat(output, temp);
+                return c_option_counter;
             }
         }
     }
@@ -1908,7 +1909,7 @@ void barrasi()
                 swap(command_tajzie[2], command_tajzie[3]);
             }
 
-            while (command_tajzie[i][0] != 0)
+            while (command_tajzie[i][0] != 0 && command_tajzie[i][0] != '=')
             {
                 swap(command_tajzie[2], command_tajzie[i]);
 
@@ -1967,7 +1968,6 @@ void barrasi()
             }
         }
 
-
         // output
         int arman_index = where_arman();
 
@@ -1976,7 +1976,6 @@ void barrasi()
         {
             swap(command_tajzie[i], command_tajzie[i + arman_index + 1]);
         }
-        // swap(command_tajzie[i], command_tajzie[i + arman_index + 1]);
 
         if (strcmp(command_tajzie[0], "insertstr") == 0)
         {
@@ -2020,6 +2019,8 @@ void barrasi()
 
             if (check_existance())
             {
+                memset(output, 0, MAX);
+
                 undo_backup();
                 find();
             }
@@ -2049,11 +2050,14 @@ void barrasi()
                 swap(command_tajzie[2], command_tajzie[2 + j]);
                 swap(command_tajzie[3], command_tajzie[3 + j]);
 
-                if (command_tajzie[1 + j][0] == '\0')
-                    memset(command_tajzie[j - arman_index], 0, MAX);
+                if (command_tajzie[3 + j][0] == '\0')
+                {
+                    memset(command_tajzie[j + 2 - arman_index], 0, MAX);
+                }
                 else
-                    memset(command_tajzie[j + 1 - arman_index], 0, MAX);
-
+                {
+                    memset(command_tajzie[j + 3 - arman_index], 0, MAX);
+                }
                 strcat(command_tajzie[3], "--str");
                 strncat(command_tajzie[2], output, MAX);
             }
@@ -2074,10 +2078,14 @@ void barrasi()
                 swap(command_tajzie[3], command_tajzie[3 + j]);
                 swap(command_tajzie[4], command_tajzie[4 + j]);
 
-                if (command_tajzie[1 + j][0] == '\0')
-                    memset(command_tajzie[j + 1 - arman_index], 0, MAX);
+                if (command_tajzie[4 + j][0] == '\0')
+                {
+                    memset(command_tajzie[j + 3 - arman_index], 0, MAX);
+                }
                 else
-                    memset(command_tajzie[j + 2 - arman_index], 0, MAX);
+                {
+                    memset(command_tajzie[j + 4 - arman_index], 0, MAX);
+                }
 
                 strcat(command_tajzie[3], "--str");
                 strncat(command_tajzie[4], output, MAX);
@@ -2099,14 +2107,20 @@ void barrasi()
                 swap(command_tajzie[3], command_tajzie[3 + j]);
                 swap(command_tajzie[4], command_tajzie[4 + j]);
 
-                if (command_tajzie[1 + j][0] == '\0')
-                    memset(command_tajzie[j + 1 - arman_index], 0, MAX);
+                if (command_tajzie[4 + j][0] == '\0')
+                {
+                    memset(command_tajzie[j + 3 - arman_index], 0, MAX);
+                }
                 else
-                    memset(command_tajzie[j + 2 - arman_index], 0, MAX);
+                {
+                    memset(command_tajzie[j + 4 - arman_index], 0, MAX);
+                }     memset(command_tajzie[j + 4 - arman_index], 0, MAX);
 
                 strcat(command_tajzie[3], "--str");
                 strncat(command_tajzie[4], output, MAX);
             }
+
+            memset(output, 0, MAX);
 
             while (command_tajzie[i][0] != 0)
             {
