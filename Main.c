@@ -15,9 +15,10 @@
 #define ULTRA_MAX 100000
 
 char command[MAX];
-char command_tajzie[20][MAX];
+char command_tajzie[30][MAX];
 char clipboard[MAX];
 char temp_clipboard[MAX];
+char output[ULTRA_MAX];
 
 // -------------------------------------------------------------------------------------------------------------------------------------
 
@@ -148,6 +149,7 @@ void tajzieh()
 bool check_existance()
 {
     char direction[MAX];
+    char temp[MAX];
     memset(direction, 0, MAX);
 
     strncpy(direction, command_tajzie[2], 3);
@@ -165,7 +167,8 @@ bool check_existance()
                 closedir(folder);
             else if (ENOENT == errno)
             {
-                printf("The \"%s\" is a wrong address!\n", direction);
+                sprintf(temp, "The \"%s\" is a wrong address!", direction);
+                strcat(output, temp);
                 return false;
             }
         }
@@ -173,7 +176,8 @@ bool check_existance()
 
     if (access(direction, F_OK) != 0)
     {
-        printf("The \"%s\" file doesn't exists!\n", direction);
+        sprintf(temp, "The \"%s\" file doesn't exists!", direction);
+        strcat(output, temp);
         return false;
     }
 
@@ -337,10 +341,12 @@ bool brace_counter()
     }
 
     if (brace_difference == 0)
+    {
         return true;
+    }
     else
     {
-        printf("The braces in text aren't equal!\n");
+        strcat(output, "The braces in text aren't equal!");
         return false;
     }
 }
@@ -433,6 +439,13 @@ int line_counter(char *direction)
     fclose(file);
 
     return lines;
+}
+
+void print_output()
+{
+    if (output[strlen(output) - 1] != '\n')
+        output[strlen(output) - 1] = '\n';
+    printf("%s", output);
 }
 
 // -------------------------------------------------------------------------------------------------------------------------------------
@@ -555,10 +568,8 @@ void cat()
 
     while (fgets(print_str, MAX + 5, file_to_be_read) != NULL)
     {
-        printf("%s", print_str);
+        strcat(output, print_str);
     }
-
-    putchar('\n');
 
     fclose(file_to_be_read);
 }
@@ -712,6 +723,7 @@ void find()
     char whole_text_tajzie[100][MAX];
     int all_repeats[MAX];
     int all_repeats_byword[MAX];
+    char temp[MAX];
     int repeat_counter = 0;
     int pos_by_char = 0;
     int pos_by_word = 1;
@@ -886,13 +898,15 @@ void find()
 
         if (all_repeats_byword[at_index - 1] == -1)
         {
-            printf("The at_index value in invalid, and the \"find\" returned \"-1\"\n");
+            sprintf(temp, "The at_index value in invalid, and the \"find\" returned \"-1\"");
+            strcat(output, temp);
             return;
         }
 
         else
         {
-            printf("The \"%d\" index of repeatation byword is \"%d\".\n", at_index, all_repeats_byword[at_index - 1]);
+            sprintf(temp, "The \"%d\" index of repeatation byword is \"%d\".", at_index, all_repeats_byword[at_index - 1]);
+            strcat(output, temp);
             return;
         }
     }
@@ -901,18 +915,19 @@ void find()
     {
         if (all_repeats_byword[0] == -1)
         {
-            printf("The value hasn't been repeated at all, and the \"find\" returned \"-1\"\n");
+            sprintf(temp, "The value hasn't been repeated at all, and the \"find\" returned \"-1\"");
+            strcat(output, temp);
             return;
         }
 
         else
         {
-            printf("All values of repeatation (byword index):\n");
+            strcat(output, "All values of repeatation (byword index):\n");
             for (int i = 0; all_repeats_byword[i] != -1; i++)
             {
-                printf("%d ", all_repeats_byword[i]);
+                sprintf(temp, "%d ", all_repeats_byword[i]);
+                strcat(output, temp);
             }
-            printf("\n");
         }
     }
 
@@ -921,13 +936,15 @@ void find()
     {
         if (all_repeats_byword[0] == -1)
         {
-            printf("The value hasn't been repeated at all, and the \"find\" returned \"-1\"\n");
+            sprintf(temp, "The value hasn't been repeated at all, and the \"find\" returned \"-1\"");
+            strcat(output, temp);
             return;
         }
 
         else
         {
-            printf("The first repeatation is in \"%d\" char.\n", all_repeats[0]);
+            sprintf(temp, "The first repeatation is in \"%d\" char.", all_repeats[0]);
+            strcat(output, temp);
             return;
         }
     }
@@ -941,13 +958,15 @@ void find()
 
         if (all_repeats_byword[at_index - 1] == -1)
         {
-            printf("The at_index value in invalid, and the \"find\" returned \"-1\"\n");
+            sprintf(temp, "The at_index value in invalid, and the \"find\" returned \"-1\"");
+            strcat(output, temp);
             return;
         }
 
         else
         {
-            printf("The \"%d\" index of repeatation is in \"%d\" char.\n", at_index, all_repeats[at_index - 1]);
+            sprintf(temp, "The \"%d\" index of repeatation is in \"%d\" char.", at_index, all_repeats[at_index - 1]);
+            strcat(output, temp);
             return;
         }
     }
@@ -956,13 +975,15 @@ void find()
     {
         if (all_repeats_byword[0] == -1)
         {
-            printf("The value hasn't been repeated at all, and the \"find\" returned \"-1\".\n");
+            sprintf(temp, "The value hasn't been repeated at all, and the \"find\" returned \"-1\".");
+            strcat(output, temp);
             return;
         }
 
         else
         {
-            printf("The first repeat was in \"%d\"th word.\n", all_repeats_byword[0]);
+            sprintf(temp, "The first repeat was in \"%d\"th word.", all_repeats_byword[0]);
+            strcat(output, temp);
         }
     }
 
@@ -977,7 +998,8 @@ void find()
             i++;
         }
 
-        printf("The count of repeatation is \"%d\".\n", tedad_repeatation);
+        sprintf(temp, "The count of repeatation is \"%d\".", tedad_repeatation);
+        strcat(output, temp);
         return;
     }
 
@@ -985,20 +1007,20 @@ void find()
     {
         if (all_repeats[0] == -1)
         {
-            printf("The value hasn't been repeated at all, and the \"find\" returned \"-1\"\n");
+            sprintf(temp, "The value hasn't been repeated at all, and the \"find\" returned \"-1\"");
+            strcat(output, temp);
             return;
         }
 
         else
         {
-            printf("All values of repeatation:\n");
+            strcat(output, "All values of repeatation:\n");
 
             for (int i = 0; all_repeats[i] != -1; i++)
             {
-                printf("%d ", all_repeats[i]);
+                sprintf(temp, "%d ", all_repeats[i]);
+                strcat(output, temp);
             }
-
-            printf("\n");
 
             return;
         }
@@ -1006,7 +1028,7 @@ void find()
 
     else
     {
-        printf("Not a accessable combination!\n");
+        strcat(output, "Not a accessable combination!");
         return;
     }
 }
@@ -1482,6 +1504,8 @@ int grep(int condition)
     memset(temp_arr, 0, MAX);
     memset(search_string, 0, MAX);
 
+    char temp[MAX];
+
     strcat(direction, command_tajzie[2]);
     strcat(search_string, command_tajzie[4]);
 
@@ -1494,10 +1518,11 @@ int grep(int condition)
         {
             if (strstr(temp_arr, search_string) != NULL)
             {
-                printf("%s: %s", direction, temp_arr);
+                sprintf(temp, "%s: %s", direction, temp_arr);
+                strcat(output, temp);
 
                 if (temp_arr[strlen(temp_arr) - 1] != '\n')
-                    printf("\n");
+                    strcat(output, "\n");
             }
         }
     }
@@ -1518,7 +1543,10 @@ int grep(int condition)
         while (fgets(temp_arr, MAX + 5, file_to_seeked) != NULL)
         {
             if (strstr(temp_arr, search_string) != NULL)
-                printf("%s\n", direction);
+            {
+                sprintf(temp, "%s\n", direction);
+                strcat(output, temp);
+            }
         }
     }
 
@@ -1694,6 +1722,7 @@ void compare(int file1_lines_num, int file2_lines_num)
 void full_tree(char *current_path, int current_depth)
 {
     char next_path[MAX];
+    char temp[MAX];
     memset(next_path, 0, MAX);
 
     struct dirent *current_object;
@@ -1709,12 +1738,19 @@ void full_tree(char *current_path, int current_depth)
             for (int i = 0; i < 2 * current_depth; i++)
             {
                 if (i % 2 == 0)
-                    printf("%c", 179);
+                {
+                    sprintf(temp, "|");
+                    strcat(output, temp);
+                }
                 else
-                    printf(" ");
+                {
+                    sprintf(temp, " ");
+                    strcat(output, temp);
+                }
             }
 
-            printf("%c%c%c %s\n", 195, 196, 196, current_object->d_name);
+            sprintf(temp, "|__%s\n", current_object->d_name);
+            strcat(output, temp);
 
             strcpy(next_path, current_path);
             strcat(next_path, "/");
@@ -1730,6 +1766,7 @@ void full_tree(char *current_path, int current_depth)
 void tree(char *current_path, int current_depth, int final_depth)
 {
     char next_path[MAX];
+    char temp[MAX];
     memset(next_path, 0, MAX);
 
     struct dirent *current_object;
@@ -1745,12 +1782,19 @@ void tree(char *current_path, int current_depth, int final_depth)
             for (int i = 0; i < 2 * current_depth; i++)
             {
                 if (i % 2 == 0)
-                    printf("%c", 179);
+                {
+                    sprintf(temp, "|");
+                    strcat(output, temp);
+                }
                 else
-                    printf(" ");
+                {
+                    sprintf(temp, " ");
+                    strcat(output, temp);
+                }
             }
 
-            printf("%c%c%c %s\n", 195, 196, 196, current_object->d_name);
+            sprintf(temp, "|__%s\n", current_object->d_name);
+            strcat(output, temp);
 
             strcpy(next_path, current_path);
             strcat(next_path, "/");
@@ -1763,8 +1807,32 @@ void tree(char *current_path, int current_depth, int final_depth)
     closedir(folder);
 }
 
+int check_arman()
+{
+    for (int i = 0; command_tajzie[i][0] != '\0'; i++)
+    {
+        if (strcmp(command_tajzie[i], "=D") == 0)
+            return 1;
+    }
+
+    return 0;
+}
+
+int where_arman()
+{
+    for (int i = 0; command_tajzie[i][0] != '\0'; i++)
+    {
+        if (strcmp(command_tajzie[i], "=D") == 0)
+            return i;
+    }
+}
+
+// -------------------------------------------------------------------------------------------------------------------------------------
+
 void barrasi()
 {
+    memset(output, 0, ULTRA_MAX);
+
     if (strcmp(command_tajzie[0], "createfile") == 0)
     {
         bool undo = false;
@@ -1781,6 +1849,303 @@ void barrasi()
         createfile(undo);
     }
 
+    else if (check_arman())
+    {
+        // input
+        if (strcmp(command_tajzie[0], "cat") == 0)
+        {
+            if (check_existance())
+            {
+                undo_backup();
+                cat();
+            }
+        }
+
+        else if (strcmp(command_tajzie[0], "find") == 0)
+        {
+            swap(command_tajzie[1], command_tajzie[3]);
+            swap(command_tajzie[2], command_tajzie[4]);
+            if (check_existance())
+            {
+                undo_backup();
+                find();
+            }
+        }
+
+        else if (strcmp(command_tajzie[0], "grep") == 0)
+        {
+            int i;
+            int temp_bin;
+            int sum_for_c_option = 0;
+            bool no_option = false;
+            bool c_option = false;
+            bool l_option = false;
+
+            if (strcmp(command_tajzie[1], "--str") == 0)
+            {
+                i = 4;
+                no_option = true;
+                swap(command_tajzie[1], command_tajzie[3]);
+            }
+
+            else if (strcmp(command_tajzie[1], "-c") == 0)
+            {
+                i = 5;
+                c_option = true;
+                memset(command_tajzie[1], 0, MAX);
+                swap(command_tajzie[4], command_tajzie[1]);
+                swap(command_tajzie[3], command_tajzie[4]);
+                swap(command_tajzie[2], command_tajzie[3]);
+            }
+
+            else
+            {
+                i = 5;
+                l_option = true;
+                memset(command_tajzie[1], 0, MAX);
+                swap(command_tajzie[4], command_tajzie[1]);
+                swap(command_tajzie[3], command_tajzie[4]);
+                swap(command_tajzie[2], command_tajzie[3]);
+            }
+
+            while (command_tajzie[i][0] != 0)
+            {
+                swap(command_tajzie[2], command_tajzie[i]);
+
+                if (check_existance())
+                {
+                    undo_backup();
+
+                    if (no_option)
+                    {
+                        temp_bin = grep(0);
+                    }
+
+                    else if (c_option)
+                    {
+                        sum_for_c_option += grep(1);
+                    }
+
+                    else if (l_option)
+                    {
+                        temp_bin = grep(2);
+                    }
+                }
+
+                i++;
+            }
+
+            if (c_option)
+            {
+                char temp[MAX];
+                sprintf(temp, "There is \"%d\" lines that have \"%s\".", sum_for_c_option, command_tajzie[4]);
+                strcat(output, temp);
+            }
+        }
+
+        else if (strcmp(command_tajzie[0], "tree") == 0)
+        {
+            long depth;
+            char *end_of_depth;
+            depth = strtol(command_tajzie[1], &end_of_depth, 10);
+
+            if (depth < -1)
+            {
+                strcat(output, "Invalid depth!\n");
+            }
+            else if (depth == 0)
+            {
+                strcat(output, "\n");
+            }
+            else if (depth == -1)
+            {
+                full_tree("../root", 0);
+            }
+            else
+            {
+                tree("../root", 0, depth);
+            }
+        }
+
+
+        // output
+        int arman_index = where_arman();
+
+        int i;
+        for (i = 0; command_tajzie[i + arman_index + 1][0] != '\0'; i++)
+        {
+            swap(command_tajzie[i], command_tajzie[i + arman_index + 1]);
+        }
+        // swap(command_tajzie[i], command_tajzie[i + arman_index + 1]);
+
+        if (strcmp(command_tajzie[0], "insertstr") == 0)
+        {
+            memset(command_tajzie[5], 0, MAX);
+            memset(command_tajzie[6], 0, MAX);
+
+            strcat(command_tajzie[5], "--str");
+            strncat(command_tajzie[6], output, MAX);
+
+            swap(command_tajzie[5], command_tajzie[3]);
+            swap(command_tajzie[6], command_tajzie[4]);
+
+            if (check_existance())
+            {
+                memset(output, 0, MAX);
+
+                undo_backup();
+                insertstr();
+                printf("Succesfully Insterted!\n");
+            }
+            else
+                print_output();
+        }
+
+        else if (strcmp(command_tajzie[0], "find") == 0)
+        {
+            memset(command_tajzie[6], 0, MAX);
+            memset(command_tajzie[7], 0, MAX);
+            memset(command_tajzie[8], 0, MAX);
+
+            strcat(command_tajzie[6], "--str");
+            strncat(command_tajzie[7], output, MAX);
+
+            swap(command_tajzie[6], command_tajzie[3]);
+            swap(command_tajzie[7], command_tajzie[4]);
+            swap(command_tajzie[8], command_tajzie[5]);
+
+            swap(command_tajzie[6], command_tajzie[5]);
+            swap(command_tajzie[7], command_tajzie[6]);
+            swap(command_tajzie[8], command_tajzie[7]);
+
+            if (check_existance())
+            {
+                undo_backup();
+                find();
+            }
+            print_output();
+        }
+
+        else if (strcmp(command_tajzie[0], "grep") == 0)
+        {
+            int i;
+            int temp_bin;
+            int sum_for_c_option = 0;
+            bool no_option = false;
+            bool c_option = false;
+            bool l_option = false;
+
+            if (strcmp(command_tajzie[1], "--file") == 0)
+            {
+                i = 4;
+                no_option = true;
+
+                int j;
+                for (j = 2; command_tajzie[2 + j][0] != '\0'; j += 2)
+                {
+                    swap(command_tajzie[2], command_tajzie[2 + j]);
+                    swap(command_tajzie[3], command_tajzie[3 + j]);
+                }
+                swap(command_tajzie[2], command_tajzie[2 + j]);
+                swap(command_tajzie[3], command_tajzie[3 + j]);
+
+                if (command_tajzie[1 + j][0] == '\0')
+                    memset(command_tajzie[j - arman_index], 0, MAX);
+                else
+                    memset(command_tajzie[j + 1 - arman_index], 0, MAX);
+
+                strcat(command_tajzie[3], "--str");
+                strncat(command_tajzie[2], output, MAX);
+            }
+
+            else if (strcmp(command_tajzie[1], "-c") == 0)
+            {
+                i = 5;
+                c_option = true;
+
+                memset(command_tajzie[1], 0, MAX);
+                swap(command_tajzie[2], command_tajzie[1]);
+                int j;
+                for (j = 2; command_tajzie[3 + j][0] != '\0'; j += 2)
+                {
+                    swap(command_tajzie[3], command_tajzie[3 + j]);
+                    swap(command_tajzie[4], command_tajzie[4 + j]);
+                }
+                swap(command_tajzie[3], command_tajzie[3 + j]);
+                swap(command_tajzie[4], command_tajzie[4 + j]);
+
+                if (command_tajzie[1 + j][0] == '\0')
+                    memset(command_tajzie[j + 1 - arman_index], 0, MAX);
+                else
+                    memset(command_tajzie[j + 2 - arman_index], 0, MAX);
+
+                strcat(command_tajzie[3], "--str");
+                strncat(command_tajzie[4], output, MAX);
+            }
+
+            else
+            {
+                i = 5;
+                l_option = true;
+
+                memset(command_tajzie[1], 0, MAX);
+                swap(command_tajzie[2], command_tajzie[1]);
+                int j;
+                for (j = 2; command_tajzie[3 + j][0] != '\0'; j += 2)
+                {
+                    swap(command_tajzie[3], command_tajzie[3 + j]);
+                    swap(command_tajzie[4], command_tajzie[4 + j]);
+                }
+                swap(command_tajzie[3], command_tajzie[3 + j]);
+                swap(command_tajzie[4], command_tajzie[4 + j]);
+
+                if (command_tajzie[1 + j][0] == '\0')
+                    memset(command_tajzie[j + 1 - arman_index], 0, MAX);
+                else
+                    memset(command_tajzie[j + 2 - arman_index], 0, MAX);
+
+                strcat(command_tajzie[3], "--str");
+                strncat(command_tajzie[4], output, MAX);
+            }
+
+            while (command_tajzie[i][0] != 0)
+            {
+                swap(command_tajzie[2], command_tajzie[i]);
+
+                if (check_existance())
+                {
+                    undo_backup();
+
+                    if (no_option)
+                    {
+                        temp_bin = grep(0);
+                    }
+
+                    else if (c_option)
+                    {
+                        sum_for_c_option += grep(1);
+                    }
+
+                    else if (l_option)
+                    {
+                        temp_bin = grep(2);
+                    }
+                }
+
+                i++;
+            }
+
+            if (c_option)
+            {
+                char temp[MAX];
+                sprintf(temp, "There is \"%d\" lines that have \"%s\".", sum_for_c_option, command_tajzie[4]);
+                strcat(output, temp);
+            }
+
+            print_output();
+        }
+    }
+
     else if (strcmp(command_tajzie[0], "insertstr") == 0)
     {
         if (check_existance())
@@ -1789,6 +2154,8 @@ void barrasi()
             insertstr();
             printf("Succesfully \"%s\" Insterted!\n", temp_clipboard);
         }
+        else
+            print_output();
     }
 
     else if (strcmp(command_tajzie[0], "cat") == 0)
@@ -1798,6 +2165,7 @@ void barrasi()
             undo_backup();
             cat();
         }
+        print_output();
     }
 
     else if (strcmp(command_tajzie[0], "removestr") == 0)
@@ -1808,6 +2176,8 @@ void barrasi()
             removestr();
             printf("Succesfully \"%s\" removed!\n", temp_clipboard);
         }
+        else
+            print_output();
     }
 
     else if (strcmp(command_tajzie[0], "copystr") == 0)
@@ -1818,6 +2188,8 @@ void barrasi()
             copystr();
             printf("Text \"%s\" has been succesfully copied!\n", clipboard);
         }
+        else
+            print_output();
     }
 
     else if (strcmp(command_tajzie[0], "cutstr") == 0)
@@ -1828,6 +2200,8 @@ void barrasi()
             cutstr();
             printf("Text \"%s\" has been succesfully cut!\n", clipboard);
         }
+        else
+            print_output();
     }
 
     else if (strcmp(command_tajzie[0], "pastestr") == 0)
@@ -1838,6 +2212,8 @@ void barrasi()
             pastestr();
             printf("Text \"%s\" has been succesfully pasted!\n", clipboard);
         }
+        else
+            print_output();
     }
 
     else if (strcmp(command_tajzie[0], "find") == 0)
@@ -1849,6 +2225,7 @@ void barrasi()
             undo_backup();
             find();
         }
+        print_output();
     }
 
     else if (strcmp(command_tajzie[0], "replace") == 0)
@@ -1865,6 +2242,8 @@ void barrasi()
             undo_backup();
             replace();
         }
+        else
+            print_output();
     }
 
     else if (strcmp(command_tajzie[0], "grep") == 0)
@@ -1931,13 +2310,21 @@ void barrasi()
         }
 
         if (c_option)
-            printf("There is \"%d\" lines that have \"%s\".\n", sum_for_c_option, command_tajzie[4]);
+        {
+            char temp[MAX];
+            sprintf(temp, "There is \"%d\" lines that have \"%s\".", sum_for_c_option, command_tajzie[4]);
+            strcat(output, temp);
+        }
+
+        print_output();
     }
 
     else if (strcmp(command_tajzie[0], "undo") == 0)
     {
         if (check_existance())
             undo();
+        else
+            print_output();
     }
 
     else if (strcmp(command_tajzie[0], "auto-indent") == 0)
@@ -1947,6 +2334,8 @@ void barrasi()
             undo_backup();
             auto_indent();
         }
+        else
+            print_output();
     }
 
     else if (strcmp(command_tajzie[0], "compare") == 0)
@@ -1963,7 +2352,11 @@ void barrasi()
 
                 compare(line_counter(command_tajzie[2]), line_counter(command_tajzie[3]));
             }
+            else
+                print_output();
         }
+        else
+            print_output();
     }
 
     else if (strcmp(command_tajzie[0], "tree") == 0)
@@ -1974,13 +2367,11 @@ void barrasi()
 
         if (depth < -1)
         {
-            printf("Invalid depth!\n");
-            return;
+            strcat(output, "Invalid depth!\n");
         }
         else if (depth == 0)
         {
-            printf("\n");
-            return;
+            strcat(output, "\n");
         }
         else if (depth == -1)
         {
@@ -1991,7 +2382,7 @@ void barrasi()
             tree("../root", 0, depth);
         }
 
-        printf("\n");
+        print_output();
     }
 
     else if (strcmp(command_tajzie[0], "exit") == 0)
