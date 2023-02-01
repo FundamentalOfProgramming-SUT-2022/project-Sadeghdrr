@@ -6,9 +6,9 @@
 #include <conio.h>
 #include <dir.h>
 #include <dirent.h>
+#include <windows.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <windows.h>
 #include <unistd.h>
 
 #define MAX 1000
@@ -719,16 +719,14 @@ void find()
     char direction[MAX];
     char search_string[MAX];
     char whole_text[ULTRA_MAX];
-    char search_string_tajzie[10][MAX];
-    char whole_text_tajzie[100][MAX];
     int all_repeats[MAX];
     int all_repeats_byword[MAX];
     char temp[MAX];
     int repeat_counter = 0;
     int pos_by_char = 0;
     int pos_by_word = 1;
-    int current_word_pos_in_text = 1;
-    int current_word_pos_in_search = 1;
+    int current_char_pos_in_text = 0;
+    int current_char_pos_in_search = 0;
     int wild_card_pos;
     bool wildcard = false;
     bool begin_astrisk = false;
@@ -739,14 +737,6 @@ void find()
     memset(whole_text, 0, ULTRA_MAX);
     memset(all_repeats, -1, MAX * sizeof(int));
     memset(all_repeats_byword, -1, MAX * sizeof(int));
-    for (int i = 0; i < 10; i++)
-    {
-        memset(search_string_tajzie[i], 0, MAX);
-    }
-    for (int i = 0; i < 50; i++)
-    {
-        memset(whole_text_tajzie[i], 0, MAX);
-    }
 
     strcat(direction, command_tajzie[2]);
     strcat(search_string, command_tajzie[4]);
@@ -775,107 +765,66 @@ void find()
     }
 
     put_to_array(file_to_be_seeked, whole_text);
-    tajzieh_string(whole_text, whole_text_tajzie);
-    tajzieh_string(search_string, search_string_tajzie);
 
     fclose(file_to_be_seeked);
 
     if (wildcard)
     {
-        while (whole_text_tajzie[pos_by_word - 1][0] != '\0')
-        {
-            while (search_string_tajzie[current_word_pos_in_search - 1][0] != '\0')
-            {
-                if (current_word_pos_in_search == wild_card_pos)
-                {
-                    if (strlen(whole_text_tajzie[current_word_pos_in_text - 1]) < strlen(search_string_tajzie[current_word_pos_in_search - 1]))
-                    {
-                        simularity = false;
-                        break;
-                    }
-
-                    if (begin_astrisk)
-                    {
-                        for (int i = 1; i <= strlen(search_string_tajzie[current_word_pos_in_search - 1]); i++)
-                        {
-                            if (whole_text_tajzie[current_word_pos_in_text - 1][strlen(whole_text_tajzie[current_word_pos_in_text - 1]) - i] !=
-                                search_string_tajzie[current_word_pos_in_search - 1][strlen(search_string_tajzie[current_word_pos_in_search - 1]) - i])
-                            {
-                                simularity = false;
-                                break;
-                            }
-                        }
-                    }
-
-                    else
-                    {
-                        for (int i = 0; i < strlen(search_string_tajzie[current_word_pos_in_search - 1]); i++)
-                        {
-                            if (whole_text_tajzie[current_word_pos_in_text - 1][i] != search_string_tajzie[current_word_pos_in_search - 1][i])
-                            {
-                                simularity = false;
-                                break;
-                            }
-                        }
-                    }
-                }
-
-                else
-                {
-                    if (strcmp(whole_text_tajzie[current_word_pos_in_text - 1], search_string_tajzie[current_word_pos_in_search - 1]) != 0)
-                    {
-                        simularity = false;
-                        break;
-                    }
-                }
-
-                current_word_pos_in_search++;
-                current_word_pos_in_text++;
-            }
-
-            if (simularity)
-            {
-                all_repeats[repeat_counter] = pos_by_char;
-                all_repeats_byword[repeat_counter] = pos_by_word;
-                repeat_counter++;
-            }
-
-            simularity = true;
-            pos_by_char += strlen(whole_text_tajzie[pos_by_word - 1]) + 1;
-            pos_by_word++;
-            current_word_pos_in_search = 1;
-            current_word_pos_in_text = pos_by_word;
-        }
+        sprintf(temp, "The wildcard isn't available yet!\n");
+        strcat(output, temp);
+        return;
     }
 
     else
     {
-        while (whole_text_tajzie[pos_by_word - 1][0] != '\0')
+        while (whole_text[pos_by_char] != '\0')
         {
-            while (search_string_tajzie[current_word_pos_in_search - 1][0] != '\0')
+            if (whole_text[current_char_pos_in_text] == search_string[current_char_pos_in_search])
             {
-                if (strcmp(whole_text_tajzie[current_word_pos_in_text - 1], search_string_tajzie[current_word_pos_in_search - 1]) != 0)
+                while (search_string[current_char_pos_in_search] != '\0')
                 {
-                    simularity = false;
-                    break;
+                    if (search_string[current_char_pos_in_search] != whole_text[current_char_pos_in_text])
+                    {
+                        simularity = false;
+                        break;
+                    }
+                    current_char_pos_in_search++;
+                    current_char_pos_in_text++;
                 }
 
-                current_word_pos_in_search++;
-                current_word_pos_in_text++;
+                if (simularity)
+                {
+                    all_repeats[repeat_counter] = pos_by_char;
+                    all_repeats_byword[repeat_counter] = pos_by_word;
+                    repeat_counter++;
+                    for (int i = pos_by_char; i <= current_char_pos_in_text; i++)
+                    {
+                        if (whole_text[i] == ' ' || whole_text[i] == '\n')
+                            pos_by_word++;
+                    }
+                    pos_by_char = current_char_pos_in_text;
+                    current_char_pos_in_search = 0;
+                }
+
+                else
+                {
+                    simularity = true;
+                    pos_by_char++;
+                    if (whole_text[pos_by_char] == ' ' || whole_text[pos_by_char] == '\n')
+                        pos_by_word++;
+                    current_char_pos_in_text = pos_by_char;
+                    current_char_pos_in_search = 0;
+                }
             }
 
-            if (simularity)
+            else
             {
-                all_repeats[repeat_counter] = pos_by_char;
-                all_repeats_byword[repeat_counter] = pos_by_word;
-                repeat_counter++;
+                pos_by_char++;
+                if (whole_text[pos_by_char] == ' ' || whole_text[pos_by_char] == '\n')
+                    pos_by_word++;
+                current_char_pos_in_text = pos_by_char;
+                current_char_pos_in_search = 0;
             }
-
-            simularity = true;
-            pos_by_char += strlen(whole_text_tajzie[pos_by_word - 1]) + 1;
-            pos_by_word++;
-            current_word_pos_in_search = 1;
-            current_word_pos_in_text = pos_by_word;
         }
     }
 
@@ -1039,15 +988,14 @@ void replace()
     char direction[MAX];
     char search_string[MAX];
     char whole_text[ULTRA_MAX];
-    char search_string_tajzie[10][MAX];
-    char whole_text_tajzie[100][MAX];
     int all_repeats[MAX];
     int all_repeats_byword[MAX];
+    char temp[MAX];
     int repeat_counter = 0;
     int pos_by_char = 0;
     int pos_by_word = 1;
-    int current_word_pos_in_text = 1;
-    int current_word_pos_in_search = 1;
+    int current_char_pos_in_text = 0;
+    int current_char_pos_in_search = 0;
     int wild_card_pos;
     bool wildcard = false;
     bool begin_astrisk = false;
@@ -1058,14 +1006,6 @@ void replace()
     memset(whole_text, 0, ULTRA_MAX);
     memset(all_repeats, -1, MAX * sizeof(int));
     memset(all_repeats_byword, -1, MAX * sizeof(int));
-    for (int i = 0; i < 10; i++)
-    {
-        memset(search_string_tajzie[i], 0, MAX);
-    }
-    for (int i = 0; i < 50; i++)
-    {
-        memset(whole_text_tajzie[i], 0, MAX);
-    }
 
     strcat(direction, command_tajzie[2]);
     strcat(search_string, command_tajzie[4]);
@@ -1094,105 +1034,66 @@ void replace()
     }
 
     put_to_array(file_to_be_seeked, whole_text);
-    tajzieh_string(whole_text, whole_text_tajzie);
-    tajzieh_string(search_string, search_string_tajzie);
+
+    fclose(file_to_be_seeked);
 
     if (wildcard)
     {
-        while (whole_text_tajzie[pos_by_word - 1][0] != '\0')
-        {
-            while (search_string_tajzie[current_word_pos_in_search - 1][0] != '\0')
-            {
-                if (current_word_pos_in_search == wild_card_pos)
-                {
-                    if (strlen(whole_text_tajzie[current_word_pos_in_text - 1]) < strlen(search_string_tajzie[current_word_pos_in_search - 1]))
-                    {
-                        simularity = false;
-                        break;
-                    }
-
-                    if (begin_astrisk)
-                    {
-                        for (int i = 1; i <= strlen(search_string_tajzie[current_word_pos_in_search - 1]); i++)
-                        {
-                            if (whole_text_tajzie[current_word_pos_in_text - 1][strlen(whole_text_tajzie[current_word_pos_in_text - 1]) - i] !=
-                                search_string_tajzie[current_word_pos_in_search - 1][strlen(search_string_tajzie[current_word_pos_in_search - 1]) - i])
-                            {
-                                simularity = false;
-                                break;
-                            }
-                        }
-                    }
-
-                    else
-                    {
-                        for (int i = 0; i < strlen(search_string_tajzie[current_word_pos_in_search - 1]); i++)
-                        {
-                            if (whole_text_tajzie[current_word_pos_in_text - 1][i] != search_string_tajzie[current_word_pos_in_search - 1][i])
-                            {
-                                simularity = false;
-                                break;
-                            }
-                        }
-                    }
-                }
-
-                else
-                {
-                    if (strcmp(whole_text_tajzie[current_word_pos_in_text - 1], search_string_tajzie[current_word_pos_in_search - 1]) != 0)
-                    {
-                        simularity = false;
-                        break;
-                    }
-                }
-
-                current_word_pos_in_search++;
-                current_word_pos_in_text++;
-            }
-
-            if (simularity)
-            {
-                all_repeats[repeat_counter] = pos_by_char;
-                all_repeats_byword[repeat_counter] = pos_by_word;
-                repeat_counter++;
-            }
-
-            simularity = true;
-            pos_by_char += strlen(whole_text_tajzie[pos_by_word - 1]) + 1;
-            pos_by_word++;
-            current_word_pos_in_search = 1;
-            current_word_pos_in_text = pos_by_word;
-        }
+        sprintf(temp, "The wildcard isn't available yet!\n");
+        strcat(output, temp);
+        return;
     }
 
     else
     {
-        while (whole_text_tajzie[pos_by_word - 1][0] != '\0')
+        while (whole_text[pos_by_char] != '\0')
         {
-            while (search_string_tajzie[current_word_pos_in_search - 1][0] != '\0')
+            if (whole_text[current_char_pos_in_text] == search_string[current_char_pos_in_search])
             {
-                if (strcmp(whole_text_tajzie[current_word_pos_in_text - 1], search_string_tajzie[current_word_pos_in_search - 1]) != 0)
+                while (search_string[current_char_pos_in_search] != '\0')
                 {
-                    simularity = false;
-                    break;
+                    if (search_string[current_char_pos_in_search] != whole_text[current_char_pos_in_text])
+                    {
+                        simularity = false;
+                        break;
+                    }
+                    current_char_pos_in_search++;
+                    current_char_pos_in_text++;
                 }
 
-                current_word_pos_in_search++;
-                current_word_pos_in_text++;
+                if (simularity)
+                {
+                    all_repeats[repeat_counter] = pos_by_char;
+                    all_repeats_byword[repeat_counter] = pos_by_word;
+                    repeat_counter++;
+                    for (int i = pos_by_char; i <= current_char_pos_in_text; i++)
+                    {
+                        if (whole_text[i] == ' ' || whole_text[i] == '\n')
+                            pos_by_word++;
+                    }
+                    pos_by_char = current_char_pos_in_text;
+                    current_char_pos_in_search = 0;
+                }
+
+                else
+                {
+                    simularity = true;
+                    pos_by_char++;
+                    if (whole_text[pos_by_char] == ' ' || whole_text[pos_by_char] == '\n')
+                        pos_by_word++;
+                    current_char_pos_in_text = pos_by_char;
+                    current_char_pos_in_search = 0;
+                }
             }
 
-            if (simularity)
+            else
             {
-                all_repeats[repeat_counter] = pos_by_char;
-                all_repeats_byword[repeat_counter] = pos_by_word;
-                repeat_counter++;
+                pos_by_char++;
+                if (whole_text[pos_by_char] == ' ' || whole_text[pos_by_char] == '\n')
+                    pos_by_word++;
+                current_char_pos_in_text = pos_by_char;
+                current_char_pos_in_search = 0;
             }
-
-            simularity = true;
-            pos_by_char += strlen(whole_text_tajzie[pos_by_word - 1]) + 1;
-            pos_by_word++;
-            current_word_pos_in_search = 1;
-            current_word_pos_in_text = pos_by_word;
         }
     }
 
@@ -1210,45 +1111,13 @@ void replace()
             // removestr
             int line_pos = 1;
             int char_pos = 0;
-            int current_word = 1;
-            int word_counter = 1;
-            char removing_string[MAX];
             char temp[MAX];
             int size_for_removing;
 
-            memset(removing_string, 0, MAX);
             memset(temp, 0, MAX);
 
-            for (int i = 0; current_word < all_repeats_byword[0]; i++)
-            {
-                char_pos++;
-
-                if (whole_text[i] == ' ')
-                    current_word++;
-                else if (whole_text[i] == '\n')
-                {
-                    current_word++;
-                    line_pos++;
-                    char_pos = 0;
-                }
-            }
-
-            for (int i = 0; search_string[i] != '\0'; i++)
-            {
-                if (search_string[i] == ' ')
-                    word_counter++;
-            }
-
-            current_word = 1;
-
-            for (int i = all_repeats[0], j = 0; current_word <= word_counter; i++, j++)
-            {
-                removing_string[j] = whole_text[i];
-                if (whole_text[i + 1] == ' ')
-                    current_word++;
-            }
-
-            size_for_removing = strlen(removing_string);
+            char_pos = all_repeats[0];
+            size_for_removing = strlen(search_string);
 
             strcat(command_tajzie[9], "--pos");
             sprintf(temp, "%d:%d", line_pos, char_pos);
@@ -1300,47 +1169,14 @@ void replace()
             // removestr
             int line_pos = 1;
             int char_pos = 0;
-            int current_word = 1;
-            int word_counter = 1;
-            char removing_string[MAX];
             char temp[MAX];
             int size_for_removing;
 
-            memset(removing_string, 0, MAX);
             memset(temp, 0, MAX);
 
-            for (int i = 0; current_word < all_repeats_byword[at_index - 1]; i++)
-            {
-                char_pos++;
+            char_pos = all_repeats[at_index - 1];
+            size_for_removing = strlen(search_string);
 
-                if (whole_text[i] == ' ')
-                    current_word++;
-                else if (whole_text[i] == '\n')
-                {
-                    current_word++;
-                    line_pos++;
-                    char_pos = 0;
-                }
-            }
-
-            for (int i = 0; search_string[i] != '\0'; i++)
-            {
-                if (search_string[i] == ' ')
-                    word_counter++;
-            }
-
-            current_word = 1;
-
-            for (int i = all_repeats[at_index - 1], j = 0; current_word <= word_counter; i++, j++)
-            {
-                removing_string[j] = whole_text[i];
-                if (whole_text[i + 1] == ' ')
-                    current_word++;
-            }
-
-            size_for_removing = strlen(removing_string);
-
-            memset(command_tajzie[9], 0, MAX);
             strcat(command_tajzie[9], "--pos");
             sprintf(temp, "%d:%d", line_pos, char_pos);
             strcat(command_tajzie[10], temp);
@@ -1386,56 +1222,24 @@ void replace()
             // removestr
             int line_pos = 1;
             int char_pos = 0;
-            int current_word = 1;
-            int word_counter = 1;
             int deleted_counter = 0;
-            char removing_string[MAX];
             char temp[MAX];
             int size_for_removing;
 
-            for (int i = 0; search_string[i] != '\0'; i++)
-            {
-                if (search_string[i] == ' ')
-                    word_counter++;
-            }
+            size_for_removing = strlen(search_string);
 
             for (int x = 0; all_repeats_byword[x] != -1; x++)
             {
-                current_word = 1;
                 line_pos = 1;
-                char_pos = 0;
+                char_pos = all_repeats[x] - deleted_counter;
 
-                memset(removing_string, 0, MAX);
                 memset(whole_text, 0, ULTRA_MAX);
                 memset(temp, 0, MAX);
 
                 fseek(file_to_be_seeked, 0, SEEK_SET);
                 put_to_array(file_to_be_seeked, whole_text);
 
-                for (int i = 0; current_word < all_repeats_byword[x]; i++)
-                {
-                    char_pos++;
-
-                    if (whole_text[i] == ' ')
-                        current_word++;
-                    else if (whole_text[i] == '\n')
-                    {
-                        current_word++;
-                        line_pos++;
-                        char_pos = 0;
-                    }
-                }
-
-                current_word = 1;
-
-                for (int i = all_repeats[x] - deleted_counter, j = 0; current_word <= word_counter; i++, j++)
-                {
-                    removing_string[j] = whole_text[i];
-                    if (whole_text[i + 1] == ' ' || whole_text[i + 1] == '\n' || whole_text[i + 1] == '\0')
-                        current_word++;
-                }
-
-                size_for_removing = strlen(removing_string);
+                size_for_removing = strlen(search_string);
 
                 memset(command_tajzie[9], 0, MAX);
                 memset(command_tajzie[10], 0, MAX);
@@ -1470,7 +1274,7 @@ void replace()
 
                 insertstr();
 
-                deleted_counter = size_for_removing - strlen(command_tajzie[4]);
+                deleted_counter = size_for_removing;
 
                 swap(command_tajzie[9], command_tajzie[3]);
                 swap(command_tajzie[10], command_tajzie[4]);
@@ -2114,7 +1918,8 @@ void barrasi()
                 else
                 {
                     memset(command_tajzie[j + 4 - arman_index], 0, MAX);
-                }     memset(command_tajzie[j + 4 - arman_index], 0, MAX);
+                }
+                memset(command_tajzie[j + 4 - arman_index], 0, MAX);
 
                 strcat(command_tajzie[3], "--str");
                 strncat(command_tajzie[4], output, MAX);
