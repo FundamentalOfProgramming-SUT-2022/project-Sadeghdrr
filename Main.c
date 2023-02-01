@@ -1226,7 +1226,6 @@ void replace()
             char temp[MAX];
             int size_for_removing;
 
-            size_for_removing = strlen(search_string);
 
             for (int x = 0; all_repeats_byword[x] != -1; x++)
             {
@@ -1274,7 +1273,7 @@ void replace()
 
                 insertstr();
 
-                deleted_counter = size_for_removing;
+                deleted_counter += size_for_removing - strlen(command_tajzie[4]);
 
                 swap(command_tajzie[9], command_tajzie[3]);
                 swap(command_tajzie[10], command_tajzie[4]);
