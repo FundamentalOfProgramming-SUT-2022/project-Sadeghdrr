@@ -7,9 +7,7 @@
 #include <dir.h>
 #include <dirent.h>
 #include <windows.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
+#include <winuser.h>
 
 #define MAX 1000
 #define ULTRA_MAX 100000
@@ -448,16 +446,27 @@ void print_output()
     printf("%s", output);
 }
 
+bool dash_file()
+{
+    for (int i = 0; command_tajzie[i][0] != '\0'; i++)
+        if (strcmp(command_tajzie[i], "--file") == 0)
+            return true;
+
+    return false;
+}
+
 // -------------------------------------------------------------------------------------------------------------------------------------
 
-void createfile(bool undo)
+void createfile()
 {
     char direction[MAX];
+    char temp[MAX];
     memset(direction, 0, MAX);
 
     if (access(command_tajzie[2], F_OK) == 0)
     {
-        printf("The file already exists and cannot be made again!\n");
+        sprintf(temp, "The file already exists and cannot be made again!\n");
+        strcat(output, temp);
         return;
     }
 
@@ -477,9 +486,6 @@ void createfile(bool undo)
 
         FILE *file_to_be_made = fopen(direction, "a");
         fclose(file_to_be_made);
-
-        if (!undo)
-            printf("File has successfully made!\n");
     }
 }
 
@@ -714,10 +720,9 @@ void pastestr()
     insertstr();
 }
 
-void find()
+void find(char search_string[MAX])
 {
     char direction[MAX];
-    char search_string[MAX];
     char whole_text[ULTRA_MAX];
     int all_repeats[MAX];
     int all_repeats_byword[MAX];
@@ -733,13 +738,11 @@ void find()
     bool simularity = true;
 
     memset(direction, 0, MAX);
-    memset(search_string, 0, MAX);
     memset(whole_text, 0, ULTRA_MAX);
     memset(all_repeats, -1, MAX * sizeof(int));
     memset(all_repeats_byword, -1, MAX * sizeof(int));
 
     strcat(direction, command_tajzie[2]);
-    strcat(search_string, command_tajzie[4]);
 
     FILE *file_to_be_seeked = fopen(direction, "r");
 
@@ -1102,7 +1105,8 @@ void replace()
     {
         if (all_repeats_byword[0] == -1)
         {
-            printf("The value hasn't been repeated at all, and the \"replace\" returned \"-1\"\n");
+            sprintf(temp, "The value hasn't been repeated at all, and the \"replace\" returned \"-1\"\n");
+            strcat(output, temp);
             return;
         }
 
@@ -1111,22 +1115,22 @@ void replace()
             // removestr
             int line_pos = 1;
             int char_pos = 0;
-            char temp[MAX];
+            char buffer[MAX];
             int size_for_removing;
 
-            memset(temp, 0, MAX);
+            memset(buffer, 0, MAX);
 
             char_pos = all_repeats[0];
             size_for_removing = strlen(search_string);
 
             strcat(command_tajzie[9], "--pos");
-            sprintf(temp, "%d:%d", line_pos, char_pos);
-            strcat(command_tajzie[10], temp);
+            sprintf(buffer, "%d:%d", line_pos, char_pos);
+            strcat(command_tajzie[10], buffer);
 
             strcat(command_tajzie[11], "-size");
-            memset(temp, 0, MAX);
-            sprintf(temp, "%d", size_for_removing);
-            strcat(command_tajzie[12], temp);
+            memset(buffer, 0, MAX);
+            sprintf(buffer, "%d", size_for_removing);
+            strcat(command_tajzie[12], buffer);
 
             strcat(command_tajzie[13], "-f");
 
@@ -1146,8 +1150,6 @@ void replace()
             swap(command_tajzie[14], command_tajzie[4]);
 
             insertstr();
-
-            printf("The part has been succesfully replaced!\n");
         }
     }
 
@@ -1160,7 +1162,8 @@ void replace()
 
         if (all_repeats_byword[at_index - 1] == -1)
         {
-            printf("The at_index value in invalid, and the \"replace\" returned \"-1\"\n");
+            sprintf(temp, "The at_index value in invalid, and the \"replace\" returned \"-1\"\n");
+            strcat(output, temp);
             return;
         }
 
@@ -1204,8 +1207,6 @@ void replace()
             swap(command_tajzie[14], command_tajzie[4]);
 
             insertstr();
-
-            printf("The part has been succesfully replaced!\n");
         }
     }
 
@@ -1213,7 +1214,8 @@ void replace()
     {
         if (all_repeats_byword[0] == -1)
         {
-            printf("The value hasn't been repeated at all, and the \"replace\" returned \"-1\"\n");
+            sprintf(temp, "The value hasn't been repeated at all, and the \"replace\" returned \"-1\"\n");
+            strcat(output, temp);
             return;
         }
 
@@ -1225,7 +1227,6 @@ void replace()
             int deleted_counter = 0;
             char temp[MAX];
             int size_for_removing;
-
 
             for (int x = 0; all_repeats_byword[x] != -1; x++)
             {
@@ -1283,15 +1284,14 @@ void replace()
                 swap(command_tajzie[10], command_tajzie[8]);
             }
 
-            printf("The part has been succesfully replaced!\n");
-
             fclose(file_to_be_seeked);
         }
     }
 
     else
     {
-        printf("Not a accessable combination!\n");
+        sprintf(temp, "Not a accessable combination!\n");
+        strcat(output, temp);
         return;
     }
 }
@@ -1381,8 +1381,6 @@ void undo()
 
     fclose(file_to_be_undone);
     fclose(backuped_file);
-
-    printf("The changes has been undone!\n");
 }
 
 void auto_indent()
@@ -1470,6 +1468,7 @@ void compare(int file1_lines_num, int file2_lines_num)
 {
     char file1_line[MAX];
     char file2_line[MAX];
+    char temp[MAX];
     int current_line = 1;
 
     memset(file1_line, 0, MAX);
@@ -1482,14 +1481,17 @@ void compare(int file1_lines_num, int file2_lines_num)
     {
         if (strcmp(file1_line, file2_line))
         {
-            printf("=============== #%d ===============\n", current_line);
+            sprintf(temp, "=============== #%d ===============\n", current_line);
+            strcat(output, temp);
 
             if (current_line == file1_lines_num)
-                printf("%s\n%s\n", file1_line, file2_line);
+                sprintf(temp, "%s\n%s\n", file1_line, file2_line);
             else if (current_line == file2_lines_num)
-                printf("%s%s\n\n", file1_line, file2_line);
+                sprintf(temp, "%s%s\n\n", file1_line, file2_line);
             else
-                printf("%s%s\n", file1_line, file2_line);
+                sprintf(temp, "%s%s\n", file1_line, file2_line);
+
+            strcat(output, temp);
         }
 
         current_line++;
@@ -1497,26 +1499,32 @@ void compare(int file1_lines_num, int file2_lines_num)
 
     if ((file1_lines_num - file2_lines_num) > 0)
     {
-        printf("<<<<<<<<<<<<<<< #%d - #%d >>>>>>>>>>>>>>>\n", current_line, file1_lines_num);
+        sprintf(temp, "<<<<<<<<<<<<<<< #%d - #%d >>>>>>>>>>>>>>>\n", current_line, file1_lines_num);
+        strcat(output, temp);
 
         do
         {
-            printf("%s", file1_line);
+            sprintf(temp, "%s", file1_line);
+            strcat(output, temp);
         } while (fgets(file1_line, MAX + 5, file1) != NULL);
 
-        printf("\n\n");
+        sprintf(temp, "\n\n");
+        strcat(output, temp);
     }
 
     else if ((file1_lines_num - file2_lines_num) < 0)
     {
-        printf(">>>>>>>>>>>>>>> #%d - #%d <<<<<<<<<<<<<<<\n", current_line, file2_lines_num);
+        sprintf(temp, ">>>>>>>>>>>>>>> #%d - #%d <<<<<<<<<<<<<<<\n", current_line, file2_lines_num);
+        strcat(output, temp);
 
         while (fgets(file2_line, MAX + 5, file2) != NULL)
         {
-            printf("%s", file2_line);
+            sprintf(temp, "%s", file2_line);
+            strcat(output, temp);
         }
 
-        printf("\n\n");
+        sprintf(temp, "\n\n");
+        strcat(output, temp);
     }
 
     fclose(file1);
@@ -1633,24 +1641,20 @@ int where_arman()
 
 // -------------------------------------------------------------------------------------------------------------------------------------
 
-void barrasi()
+void barrasi(char direction[])
 {
     memset(output, 0, ULTRA_MAX);
 
     if (strcmp(command_tajzie[0], "createfile") == 0)
     {
-        bool undo = false;
-
-        createfile(undo);
+        createfile();
 
         command_tajzie[2][3] = 'u';
         command_tajzie[2][4] = 'n';
         command_tajzie[2][5] = 'd';
         command_tajzie[2][6] = 'o';
 
-        undo = true;
-
-        createfile(undo);
+        createfile();
     }
 
     else if (check_arman())
@@ -1672,7 +1676,7 @@ void barrasi()
             if (check_existance())
             {
                 undo_backup();
-                find();
+                find(command_tajzie[4]);
             }
         }
 
@@ -1825,7 +1829,7 @@ void barrasi()
                 memset(output, 0, MAX);
 
                 undo_backup();
-                find();
+                find(command_tajzie[4]);
             }
             print_output();
         }
@@ -1966,88 +1970,156 @@ void barrasi()
 
     else if (strcmp(command_tajzie[0], "insertstr") == 0)
     {
+        if (!dash_file())
+        {
+            strcat(command_tajzie[5], "--file");
+            strcat(command_tajzie[6], direction);
+            swap(command_tajzie[5], command_tajzie[1]);
+            swap(command_tajzie[6], command_tajzie[2]);
+            swap(command_tajzie[5], command_tajzie[3]);
+            swap(command_tajzie[6], command_tajzie[4]);
+        }
+
         if (check_existance())
         {
             undo_backup();
             insertstr();
-            printf("Succesfully \"%s\" Insterted!\n", temp_clipboard);
         }
-        else
-            print_output();
     }
 
     else if (strcmp(command_tajzie[0], "cat") == 0)
     {
+        if (!dash_file())
+        {
+            strcat(command_tajzie[1], "--file");
+            strcat(command_tajzie[2], direction);
+        }
+
         if (check_existance())
         {
             undo_backup();
             cat();
         }
-        print_output();
     }
 
     else if (strcmp(command_tajzie[0], "removestr") == 0)
     {
+        if (!dash_file())
+        {
+            strcat(command_tajzie[7], "--file");
+            strcat(command_tajzie[8], direction);
+            swap(command_tajzie[7], command_tajzie[1]);
+            swap(command_tajzie[8], command_tajzie[2]);
+            swap(command_tajzie[7], command_tajzie[3]);
+            swap(command_tajzie[8], command_tajzie[4]);
+            swap(command_tajzie[7], command_tajzie[5]);
+            swap(command_tajzie[8], command_tajzie[6]);
+        }
+
         if (check_existance())
         {
             undo_backup();
             removestr();
-            printf("Succesfully \"%s\" removed!\n", temp_clipboard);
         }
-        else
-            print_output();
     }
 
     else if (strcmp(command_tajzie[0], "copystr") == 0)
     {
+        if (!dash_file())
+        {
+            strcat(command_tajzie[7], "--file");
+            strcat(command_tajzie[8], direction);
+            swap(command_tajzie[7], command_tajzie[1]);
+            swap(command_tajzie[8], command_tajzie[2]);
+            swap(command_tajzie[7], command_tajzie[3]);
+            swap(command_tajzie[8], command_tajzie[4]);
+            swap(command_tajzie[7], command_tajzie[5]);
+            swap(command_tajzie[8], command_tajzie[6]);
+        }
+
         if (check_existance())
         {
             undo_backup();
             copystr();
-            printf("Text \"%s\" has been succesfully copied!\n", clipboard);
         }
-        else
-            print_output();
     }
 
     else if (strcmp(command_tajzie[0], "cutstr") == 0)
     {
+        if (!dash_file())
+        {
+            strcat(command_tajzie[7], "--file");
+            strcat(command_tajzie[8], direction);
+            swap(command_tajzie[7], command_tajzie[1]);
+            swap(command_tajzie[8], command_tajzie[2]);
+            swap(command_tajzie[7], command_tajzie[3]);
+            swap(command_tajzie[8], command_tajzie[4]);
+            swap(command_tajzie[7], command_tajzie[5]);
+            swap(command_tajzie[8], command_tajzie[6]);
+        }
+
         if (check_existance())
         {
             undo_backup();
             cutstr();
-            printf("Text \"%s\" has been succesfully cut!\n", clipboard);
         }
-        else
-            print_output();
     }
 
     else if (strcmp(command_tajzie[0], "pastestr") == 0)
     {
+        if (!dash_file())
+        {
+            strcat(command_tajzie[3], "--file");
+            strcat(command_tajzie[4], direction);
+            swap(command_tajzie[3], command_tajzie[1]);
+            swap(command_tajzie[4], command_tajzie[2]);
+        }
+
         if (check_existance())
         {
             undo_backup();
             pastestr();
-            printf("Text \"%s\" has been succesfully pasted!\n", clipboard);
         }
-        else
-            print_output();
     }
 
     else if (strcmp(command_tajzie[0], "find") == 0)
     {
+        if (!dash_file())
+        {
+            strcat(command_tajzie[7], "--file");
+            strcat(command_tajzie[8], direction);
+            swap(command_tajzie[7], command_tajzie[1]);
+            swap(command_tajzie[8], command_tajzie[2]);
+            swap(command_tajzie[7], command_tajzie[3]);
+            swap(command_tajzie[8], command_tajzie[4]);
+            swap(command_tajzie[7], command_tajzie[5]);
+            swap(command_tajzie[8], command_tajzie[6]);
+        }
+
         swap(command_tajzie[1], command_tajzie[3]);
         swap(command_tajzie[2], command_tajzie[4]);
+
         if (check_existance())
         {
             undo_backup();
-            find();
+            find(command_tajzie[4]);
         }
-        print_output();
     }
 
     else if (strcmp(command_tajzie[0], "replace") == 0)
     {
+        if (!dash_file())
+        {
+            strcat(command_tajzie[7], "--file");
+            strcat(command_tajzie[8], direction);
+            swap(command_tajzie[7], command_tajzie[1]);
+            swap(command_tajzie[8], command_tajzie[2]);
+            swap(command_tajzie[7], command_tajzie[3]);
+            swap(command_tajzie[8], command_tajzie[4]);
+            swap(command_tajzie[7], command_tajzie[5]);
+            swap(command_tajzie[8], command_tajzie[6]);
+        }
+
         swap(command_tajzie[1], command_tajzie[5]);
         swap(command_tajzie[2], command_tajzie[6]);
         swap(command_tajzie[3], command_tajzie[5]);
@@ -2060,8 +2132,6 @@ void barrasi()
             undo_backup();
             replace();
         }
-        else
-            print_output();
     }
 
     else if (strcmp(command_tajzie[0], "grep") == 0)
@@ -2133,31 +2203,45 @@ void barrasi()
             sprintf(temp, "There is \"%d\" lines that have \"%s\".", sum_for_c_option, command_tajzie[4]);
             strcat(output, temp);
         }
-
-        print_output();
     }
 
     else if (strcmp(command_tajzie[0], "undo") == 0)
     {
+        if (!dash_file())
+        {
+            strcat(command_tajzie[1], "--file");
+            strcat(command_tajzie[2], direction);
+        }
+
         if (check_existance())
             undo();
-        else
-            print_output();
     }
 
     else if (strcmp(command_tajzie[0], "auto-indent") == 0)
     {
+        if (!dash_file())
+        {
+            strcat(command_tajzie[1], "--file");
+            strcat(command_tajzie[2], direction);
+        }
+
         if (check_existance() && brace_counter())
         {
             undo_backup();
             auto_indent();
         }
-        else
-            print_output();
     }
 
     else if (strcmp(command_tajzie[0], "compare") == 0)
     {
+        if (!dash_file())
+        {
+            strcat(command_tajzie[3], "--file");
+            strcat(command_tajzie[4], direction);
+            swap(command_tajzie[3], command_tajzie[1]);
+            swap(command_tajzie[4], command_tajzie[2]);
+        }
+
         if (check_existance())
         {
             undo_backup();
@@ -2170,11 +2254,7 @@ void barrasi()
 
                 compare(line_counter(command_tajzie[2]), line_counter(command_tajzie[3]));
             }
-            else
-                print_output();
         }
-        else
-            print_output();
     }
 
     else if (strcmp(command_tajzie[0], "tree") == 0)
@@ -2199,33 +2279,227 @@ void barrasi()
         {
             tree("../root", 0, depth);
         }
-
-        print_output();
     }
 
     else if (strcmp(command_tajzie[0], "exit") == 0)
     {
-        printf("Have a good day!\n");
         return;
     }
 
     else
-        printf("Wrong command!\n");
+    {
+        char temp[MAX];
+        sprintf(temp, "Wrong command!\n");
+        strcat(output, temp);
+    }
 }
 
-// ------------------------------------------------------------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------------------------------------------------------------
+
+void vim_window()
+{
+
+    char file_name[MAX];
+    char direction[MAX];
+    char temp[MAX];
+    char input_char;
+    int line_sizes[MAX];
+    bool saved = false;
+    bool normal_mode = true;
+    bool visual_mode = false;
+    bool insert_mode = false;
+
+    memset(file_name, 0, MAX);
+    memset(direction, 0, MAX);
+    memset(temp, 0, MAX);
+    memset(line_sizes, 0, MAX * sizeof(int));
+
+    strcat(file_name, "Untitled.txt");
+    strcat(direction, "../unsaved/Untitled.txt");
+
+    char window[MAX][MAX];
+    for (int i = 0; i < MAX; i++)
+        memset(window[i], 0, MAX);
+    int first_line = 1, last_line = 40, current_line = 1, max_lines = 40;
+    int x, y, x1, y1;
+
+    FILE *file = fopen(direction, "r");
+    // FILE *file = fopen(direction, "w");
+    // fclose(file);
+
+    // file = fopen(direction, "r");
+
+    /*POINT xy;
+    GetCursorPos(&xy);
+    x = xy.x;  // current pos
+    y = xy.y;  // current pos
+    x1 = xy.x; // first pos
+    y1 = xy.y; // first pos*/
+
+    while (strcmp(command, "exit") != 0)
+    {
+        system("cls");
+        memset(line_sizes, 0, MAX * sizeof(int));
+
+        while (fgets(temp, MAX, file) != NULL && (current_line - first_line) < max_lines)
+        {
+            line_sizes[current_line - 1] = strlen(temp);
+            for (int i = 0; (strlen(temp) - i * 180) > 180; i++)
+                max_lines--;
+
+            printf("%3d  ", current_line);
+            printf("%s", temp);
+            current_line++;
+        }
+
+        if ((current_line - first_line) < max_lines)
+        {
+            putchar('\n');
+            while ((current_line - first_line) < max_lines)
+            {
+                printf("~\n");
+                current_line++;
+            }
+        }
+
+        else
+            putchar('\n');
+
+        // ---------------------------------------------
+        for (int i = 0; i < 185; i++)
+            printf("-");
+        putchar('\n');
+
+        fseek(file, 0, SEEK_SET);
+        current_line = first_line;
+        // ----------------------------------------------
+
+        if (normal_mode)
+        {
+            if (saved)
+                printf("NORMAL\t|\t%s\n", file_name);
+            else
+                printf("NORMAL\t|\t%s\t+\n", file_name);
+
+            // --------------------
+            for (int i = 0; i < 185; i++)
+                printf("-");
+            putchar('\n');
+            // ---------------------
+
+            input_char = getch();
+            switch (input_char)
+            {
+            case ':':
+                clear();
+
+                putchar(':');
+
+                int i = 0;
+                while ((input_char = getchar()) != '\n')
+                {
+                    command[i] = input_char;
+                    i++;
+                }
+                command[i] = '\0';
+
+                tajzieh();
+                barrasi(direction);
+
+                if (output[0] != '\0')
+                {
+                    fclose(file);
+                    memset(direction, 0, MAX);
+                    strcat(direction, "../unsaved/Untitled.txt");
+
+                    file = fopen(direction, "w");
+                    fputs(output, file);
+                    fclose(file);
+
+                    file = fopen(direction, "r");
+                }
+
+                break;
+
+            case '/':
+                char search_string[MAX];
+                memset(search_string, 0, MAX);
+
+                putchar('/');
+
+                i = 0;
+                while ((input_char = getchar()) != '\n')
+                {
+                    search_string[i] = input_char;
+                    i++;
+                }
+                search_string[i] = '\0';
+
+                find(search_string);
+                break;
+
+            // change mode
+            case 'i':
+                insert_mode = true;
+                normal_mode = false;
+                visual_mode = false;
+                break;
+
+            case 'v':
+                visual_mode = true;
+                insert_mode = false;
+                normal_mode = false;
+                break;
+
+            default:
+                break;
+            }
+        }
+
+        else if (insert_mode)
+        {
+            if (saved)
+                printf("INSERT\t|\t%s\n", file_name);
+            else
+                printf("INSERT\t|\t%s\t+\n", file_name);
+
+            input_char = getch();
+            switch (input_char)
+            {
+            default:
+                normal_mode = true;
+                visual_mode = false;
+                insert_mode = false;
+                break;
+            }
+        }
+
+        else if (visual_mode)
+        {
+            if (saved)
+                printf("VISUAL\t|\t%s\n", file_name);
+            else
+                printf("VISUAL\t|\t%s\t+\n", file_name);
+
+            input_char = getch();
+            switch (input_char)
+            {
+            default:
+                normal_mode = true;
+                visual_mode = false;
+                insert_mode = false;
+                break;
+            }
+        }
+    }
+    fclose(file);
+}
+
+// -------------------------------------------------------------------------------------------------------------------------------------
 
 int main()
 {
-    printf("Hi, Enter your command.\nAnd for ending the procces, enter \"exit\".\n");
-
-    while (strcmp(command, "exit"))
-    {
-        clear();
-        gets(command);
-        tajzieh();
-        barrasi();
-    }
+    vim_window();
 
     return 0;
 }
