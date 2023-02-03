@@ -2848,7 +2848,7 @@ void vim_window()
                 insert_mode = false;
                 break;
 
-            case 127:
+            case 8:
                 clear();
                 strcat(command_tajzie[0], "removestr");
 
