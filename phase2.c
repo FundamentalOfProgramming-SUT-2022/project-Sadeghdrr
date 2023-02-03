@@ -8,6 +8,7 @@
 #include <dirent.h>
 #include <windows.h>
 #include <winuser.h>
+#include "rlutil.h"
 
 #define MAX 1000
 #define ULTRA_MAX 100000
@@ -721,6 +722,271 @@ void pastestr()
 }
 
 void find(char search_string[MAX])
+{
+    char direction[MAX];
+    char whole_text[ULTRA_MAX];
+    int all_repeats[MAX];
+    int all_repeats_byword[MAX];
+    char temp[MAX];
+    int repeat_counter = 0;
+    int pos_by_char = 0;
+    int pos_by_word = 1;
+    int current_char_pos_in_text = 0;
+    int current_char_pos_in_search = 0;
+    int wild_card_pos;
+    bool wildcard = false;
+    bool begin_astrisk = false;
+    bool simularity = true;
+
+    memset(direction, 0, MAX);
+    memset(whole_text, 0, ULTRA_MAX);
+    memset(all_repeats, -1, MAX * sizeof(int));
+    memset(all_repeats_byword, -1, MAX * sizeof(int));
+
+    strcat(direction, command_tajzie[2]);
+
+    FILE *file_to_be_seeked = fopen(direction, "r");
+
+    for (int i = 0; i < strlen(search_string); i++)
+    {
+        if ((search_string[i] == '*' && i == 0) || (search_string[i] == '*' && search_string[i - 1] != '\\'))
+        {
+            wildcard = true;
+            break;
+        }
+    }
+
+    if (wildcard)
+    {
+        wild_card_pos = say_wild_pos(search_string);
+        begin_astrisk = say_begin_astrisk(search_string);
+        remove_asterisk(search_string);
+    }
+
+    else
+    {
+        remove_backslash(search_string);
+    }
+
+    put_to_array(file_to_be_seeked, whole_text);
+
+    fclose(file_to_be_seeked);
+
+    if (wildcard)
+    {
+        sprintf(temp, "The wildcard isn't available yet!\n");
+        strcat(output, temp);
+        return;
+    }
+
+    else
+    {
+        while (whole_text[pos_by_char] != '\0')
+        {
+            if (whole_text[current_char_pos_in_text] == search_string[current_char_pos_in_search])
+            {
+                while (search_string[current_char_pos_in_search] != '\0')
+                {
+                    if (search_string[current_char_pos_in_search] != whole_text[current_char_pos_in_text])
+                    {
+                        simularity = false;
+                        break;
+                    }
+                    current_char_pos_in_search++;
+                    current_char_pos_in_text++;
+                }
+
+                if (simularity)
+                {
+                    all_repeats[repeat_counter] = pos_by_char;
+                    all_repeats_byword[repeat_counter] = pos_by_word;
+                    repeat_counter++;
+                    for (int i = pos_by_char; i <= current_char_pos_in_text; i++)
+                    {
+                        if (whole_text[i] == ' ' || whole_text[i] == '\n')
+                            pos_by_word++;
+                    }
+                    pos_by_char = current_char_pos_in_text;
+                    current_char_pos_in_search = 0;
+                }
+
+                else
+                {
+                    simularity = true;
+                    pos_by_char++;
+                    if (whole_text[pos_by_char] == ' ' || whole_text[pos_by_char] == '\n')
+                        pos_by_word++;
+                    current_char_pos_in_text = pos_by_char;
+                    current_char_pos_in_search = 0;
+                }
+            }
+
+            else
+            {
+                pos_by_char++;
+                if (whole_text[pos_by_char] == ' ' || whole_text[pos_by_char] == '\n')
+                    pos_by_word++;
+                current_char_pos_in_text = pos_by_char;
+                current_char_pos_in_search = 0;
+            }
+        }
+    }
+
+    // tarkibi
+    // mojaz:   at-byword   byword-all
+    if ((strcmp(command_tajzie[6], "-at") == 0 && strcmp(command_tajzie[5], "-byword") == 0) || (strcmp(command_tajzie[7], "-byword") == 0 && strcmp(command_tajzie[5], "-at") == 0))
+    {
+        long at_index;
+        char *end_of_at_index;
+
+        if (strcmp(command_tajzie[6], "-at") == 0)
+        {
+            at_index = strtol(command_tajzie[7], &end_of_at_index, 10);
+        }
+
+        else
+        {
+            at_index = strtol(command_tajzie[6], &end_of_at_index, 10);
+        }
+
+        if (all_repeats_byword[at_index - 1] == -1)
+        {
+            sprintf(temp, "The at_index value in invalid, and the \"find\" returned \"-1\"");
+            strcat(output, temp);
+            return;
+        }
+
+        else
+        {
+            sprintf(temp, "The \"%d\" index of repeatation byword is \"%d\".", at_index, all_repeats_byword[at_index - 1]);
+            strcat(output, temp);
+            return;
+        }
+    }
+
+    else if ((strcmp(command_tajzie[6], "-all") == 0 && strcmp(command_tajzie[5], "-byword") == 0) || (strcmp(command_tajzie[6], "-byword") == 0 && strcmp(command_tajzie[5], "-all") == 0))
+    {
+        if (all_repeats_byword[0] == -1)
+        {
+            sprintf(temp, "The value hasn't been repeated at all, and the \"find\" returned \"-1\"");
+            strcat(output, temp);
+            return;
+        }
+
+        else
+        {
+            strcat(output, "All values of repeatation (byword index):\n");
+            for (int i = 0; all_repeats_byword[i] != -1; i++)
+            {
+                sprintf(temp, "%d ", all_repeats_byword[i]);
+                strcat(output, temp);
+            }
+        }
+    }
+
+    // simple
+    else if (command_tajzie[5][0] == '\0' || command_tajzie[5][0] == '=')
+    {
+        if (all_repeats_byword[0] == -1)
+        {
+            sprintf(temp, "The value hasn't been repeated at all, and the \"find\" returned \"-1\"");
+            strcat(output, temp);
+            return;
+        }
+
+        else
+        {
+            sprintf(temp, "The first repeatation is in \"%d\" char.", all_repeats[0]);
+            strcat(output, temp);
+            return;
+        }
+    }
+
+    else if (strcmp(command_tajzie[5], "-at") == 0 && (command_tajzie[7][0] == '\0' || command_tajzie[7][0] == '='))
+    {
+        long at_index;
+        char *end_of_at_index;
+
+        at_index = strtol(command_tajzie[6], &end_of_at_index, 10);
+
+        if (all_repeats_byword[at_index - 1] == -1)
+        {
+            sprintf(temp, "The at_index value in invalid, and the \"find\" returned \"-1\"");
+            strcat(output, temp);
+            return;
+        }
+
+        else
+        {
+            sprintf(temp, "The \"%d\" index of repeatation is in \"%d\" char.", at_index, all_repeats[at_index - 1]);
+            strcat(output, temp);
+            return;
+        }
+    }
+
+    else if (strcmp(command_tajzie[5], "-byword") == 0 && (command_tajzie[6][0] == '\0' || command_tajzie[6][0] == '='))
+    {
+        if (all_repeats_byword[0] == -1)
+        {
+            sprintf(temp, "The value hasn't been repeated at all, and the \"find\" returned \"-1\".");
+            strcat(output, temp);
+            return;
+        }
+
+        else
+        {
+            sprintf(temp, "The first repeat was in \"%d\"th word.", all_repeats_byword[0]);
+            strcat(output, temp);
+        }
+    }
+
+    else if (strcmp(command_tajzie[5], "-count") == 0 && (command_tajzie[6][0] == '\0' || command_tajzie[6][0] == '='))
+    {
+        int tedad_repeatation = 0;
+        int i = 0;
+
+        while (all_repeats[i] != -1)
+        {
+            tedad_repeatation++;
+            i++;
+        }
+
+        sprintf(temp, "The count of repeatation is \"%d\".", tedad_repeatation);
+        strcat(output, temp);
+        return;
+    }
+
+    else if (strcmp(command_tajzie[5], "-all") == 0 && (command_tajzie[6][0] == '\0' || command_tajzie[6][0] == '='))
+    {
+        if (all_repeats[0] == -1)
+        {
+            sprintf(temp, "The value hasn't been repeated at all, and the \"find\" returned \"-1\"");
+            strcat(output, temp);
+            return;
+        }
+
+        else
+        {
+            strcat(output, "All values of repeatation:\n");
+
+            for (int i = 0; all_repeats[i] != -1; i++)
+            {
+                sprintf(temp, "%d ", all_repeats[i]);
+                strcat(output, temp);
+            }
+
+            return;
+        }
+    }
+
+    else
+    {
+        strcat(output, "Not a accessable combination!");
+        return;
+    }
+}
+
+void find_infile(char search_string[MAX])
 {
     char direction[MAX];
     char whole_text[ULTRA_MAX];
@@ -2289,7 +2555,7 @@ void barrasi(char direction[])
     else
     {
         char temp[MAX];
-        sprintf(temp, "Wrong command!\n");
+        sprintf(temp, "Wrong command!");
         strcat(output, temp);
     }
 }
@@ -2320,72 +2586,110 @@ void vim_window()
     char window[MAX][MAX];
     for (int i = 0; i < MAX; i++)
         memset(window[i], 0, MAX);
-    int first_line = 1, last_line = 40, current_line = 1, max_lines = 40;
-    int x, y, x1, y1;
+    int first_line = 1, last_line = 1, current_line = 1, max_lines = 40;
+    int cursor_x = 0, cursor_y = 1;
 
     FILE *file = fopen(direction, "r");
+
     // FILE *file = fopen(direction, "w");
     // fclose(file);
-
     // file = fopen(direction, "r");
-
-    /*POINT xy;
-    GetCursorPos(&xy);
-    x = xy.x;  // current pos
-    y = xy.y;  // current pos
-    x1 = xy.x; // first pos
-    y1 = xy.y; // first pos*/
 
     while (strcmp(command, "exit") != 0)
     {
         system("cls");
         memset(line_sizes, 0, MAX * sizeof(int));
 
+        fseek(file, 0, SEEK_SET);
+        current_line = 1;
+
         while (fgets(temp, MAX, file) != NULL && (current_line - first_line) < max_lines)
         {
             line_sizes[current_line - 1] = strlen(temp);
-            for (int i = 0; (strlen(temp) - i * 180) > 180; i++)
-                max_lines--;
 
-            printf("%3d  ", current_line);
-            printf("%s", temp);
+            if (current_line >= first_line)
+            {
+                printf("%3d  ", current_line);
+
+                if (current_line - first_line == cursor_y - 1)
+                {
+                    int i;
+                    for (i = 0; temp[i] != '\0'; i++)
+                    {
+                        if (i == cursor_x && temp[i + 1] == '\0')
+                        {
+                            setBackgroundColor(LIGHTMAGENTA);
+                            putchar(' ');
+                            if (temp[i] == '\n')
+                                putchar(temp[i]);
+                            setBackgroundColor(BLACK);
+                        }
+
+                        else if (i == cursor_x)
+                        {
+                            setBackgroundColor(LIGHTMAGENTA);
+                            putchar(temp[i]);
+                            setBackgroundColor(BLACK);
+                        }
+
+                        else
+                        {
+                            putchar(temp[i]);
+                        }
+                    }
+                }
+
+                else
+                {
+                    printf("%s", temp);
+                }
+            }
+
             current_line++;
         }
 
+        last_line = current_line - 1;
+
         if ((current_line - first_line) < max_lines)
         {
+            setColor(BLUE);
             putchar('\n');
             while ((current_line - first_line) < max_lines)
             {
                 printf("~\n");
                 current_line++;
             }
+            setColor(WHITE);
         }
 
-        else
-            putchar('\n');
-
-        // ---------------------------------------------
-        for (int i = 0; i < 185; i++)
-            printf("-");
         putchar('\n');
-
-        fseek(file, 0, SEEK_SET);
-        current_line = first_line;
-        // ----------------------------------------------
 
         if (normal_mode)
         {
+            setColor(BLACK);
             if (saved)
-                printf("NORMAL\t|\t%s\n", file_name);
+            {
+                setBackgroundColor(LIGHTCYAN);
+                printf(" NORMAL   ");
+                setBackgroundColor(GREY);
+                printf("  %s      ", file_name);
+                setBackgroundColor(BLACK);
+            }
             else
-                printf("NORMAL\t|\t%s\t+\n", file_name);
+            {
+                setBackgroundColor(LIGHTCYAN);
+                printf(" NORMAL   ");
+                setBackgroundColor(GREY);
+                printf("  %s   +  ", file_name);
+                setBackgroundColor(BLACK);
+            }
+            setColor(WHITE);
 
-            // --------------------
-            for (int i = 0; i < 185; i++)
-                printf("-");
+            setBackgroundColor(DARKGREY);
+            for (int i = 0; i < 163; i++)
+                putchar(' ');
             putchar('\n');
-            // ---------------------
+            setBackgroundColor(BLACK);
 
             input_char = getch();
             switch (input_char)
@@ -2408,6 +2712,17 @@ void vim_window()
 
                 if (output[0] != '\0')
                 {
+                    if (strcmp(output, "Wrong command!") == 0)
+                    {
+                        system("cls");
+                        system("color CE");
+                        gotoxy(100, 25);
+                        printf("Wrong command!");
+                        getch();
+                        system("color 07");
+                        continue;
+                    }
+
                     fclose(file);
                     memset(direction, 0, MAX);
                     strcat(direction, "../unsaved/Untitled.txt");
@@ -2417,6 +2732,8 @@ void vim_window()
                     fclose(file);
 
                     file = fopen(direction, "r");
+                    first_line = 1;
+                    last_line = 40;
                 }
 
                 break;
@@ -2435,10 +2752,47 @@ void vim_window()
                 }
                 search_string[i] = '\0';
 
-                find(search_string);
+                find_infile(search_string);
                 break;
 
-            // change mode
+            // Navigation
+            case 'k': // up
+                if (cursor_y == 5 && first_line > 1)
+                    first_line--;
+                else if (cursor_y > 1)
+                    cursor_y--;
+
+                while (cursor_x > line_sizes[(cursor_y - 1) + (first_line - 1)] - 1)
+                {
+                    cursor_x--;
+                }
+
+                break;
+
+            case 'j': // down
+                if (cursor_y == 36 && last_line - first_line > 36)
+                    first_line++;
+                else if (cursor_y <= last_line - first_line)
+                    cursor_y++;
+
+                while (cursor_x > line_sizes[(cursor_y - 1) + (first_line - 1)] - 1)
+                {
+                    cursor_x--;
+                }
+
+                break;
+
+            case 'h': // left
+                if (cursor_x > 0)
+                    cursor_x--;
+                break;
+
+            case 'l': // right
+                if (cursor_x < line_sizes[(cursor_y - 1) + (first_line - 1)] - 1)
+                    cursor_x++;
+                break;
+
+            // Change mode
             case 'i':
                 insert_mode = true;
                 normal_mode = false;
@@ -2458,40 +2812,167 @@ void vim_window()
 
         else if (insert_mode)
         {
+            setColor(BLACK);
             if (saved)
-                printf("INSERT\t|\t%s\n", file_name);
+            {
+                setBackgroundColor(LIGHTCYAN);
+                printf(" INSERT   ");
+                setBackgroundColor(GREY);
+                printf("  %s      ", file_name);
+                setBackgroundColor(BLACK);
+            }
             else
-                printf("INSERT\t|\t%s\t+\n", file_name);
+            {
+                setBackgroundColor(LIGHTCYAN);
+                printf(" INSERT   ");
+                setBackgroundColor(GREY);
+                printf("  %s   +  ", file_name);
+                setBackgroundColor(BLACK);
+            }
+            setColor(WHITE);
+
+            setBackgroundColor(DARKGREY);
+            for (int i = 0; i < 163; i++)
+                putchar(' ');
+            putchar('\n');
+            setBackgroundColor(BLACK);
 
             input_char = getch();
             switch (input_char)
             {
-            default:
+            // Navigation
+            case 'k': // up
+                if (cursor_y == 5 && first_line > 1)
+                    first_line--;
+                else if (cursor_y > 1)
+                    cursor_y--;
+
+                while (cursor_x > line_sizes[(cursor_y - 1) + (first_line - 1)] - 1)
+                {
+                    cursor_x--;
+                }
+
+                break;
+
+            case 'j': // down
+                if (cursor_y == 36 && last_line - first_line > 36)
+                    first_line++;
+                else if (cursor_y <= last_line - first_line)
+                    cursor_y++;
+
+                while (cursor_x > line_sizes[(cursor_y - 1) + (first_line - 1)] - 1)
+                {
+                    cursor_x--;
+                }
+
+                break;
+
+            case 'h': // left
+                if (cursor_x > 0)
+                    cursor_x--;
+                break;
+
+            case 'l': // right
+                if (cursor_x < line_sizes[(cursor_y - 1) + (first_line - 1)] - 1)
+                    cursor_x++;
+                break;
+
+            // Change mode
+            case 27:
                 normal_mode = true;
                 visual_mode = false;
                 insert_mode = false;
+
+            default:
                 break;
             }
         }
 
         else if (visual_mode)
         {
+            setColor(BLACK);
             if (saved)
-                printf("VISUAL\t|\t%s\n", file_name);
+            {
+                setBackgroundColor(LIGHTCYAN);
+                printf(" VISUAL   ");
+                setBackgroundColor(GREY);
+                printf("  %s      ", file_name);
+                setBackgroundColor(BLACK);
+            }
             else
-                printf("VISUAL\t|\t%s\t+\n", file_name);
+            {
+                setBackgroundColor(LIGHTCYAN);
+                printf(" VISUAL   ");
+                setBackgroundColor(GREY);
+                printf("  %s   +  ", file_name);
+                setBackgroundColor(BLACK);
+            }
+            setColor(WHITE);
+
+            setBackgroundColor(DARKGREY);
+            for (int i = 0; i < 163; i++)
+                putchar(' ');
+            putchar('\n');
+            setBackgroundColor(BLACK);
 
             input_char = getch();
             switch (input_char)
             {
-            default:
+            // Navigation
+            case 'k': // up
+                if (cursor_y == 5 && first_line > 1)
+                    first_line--;
+                else if (cursor_y > 1)
+                    cursor_y--;
+
+                while (cursor_x > line_sizes[(cursor_y - 1) + (first_line - 1)] - 1)
+                {
+                    cursor_x--;
+                }
+
+                break;
+
+            case 'j': // down
+                if (cursor_y == 36 && last_line - first_line > 36)
+                    first_line++;
+                else if (cursor_y <= last_line - first_line)
+                    cursor_y++;
+
+                while (cursor_x > line_sizes[(cursor_y - 1) + (first_line - 1)] - 1)
+                {
+                    cursor_x--;
+                }
+
+                break;
+
+            case 'h': // left
+                if (cursor_x > 0)
+                    cursor_x--;
+                break;
+
+            case 'l': // right
+                if (cursor_x < line_sizes[(cursor_y - 1) + (first_line - 1)] - 1)
+                    cursor_x++;
+                break;
+            
+            // Change mode
+            case 27:
                 normal_mode = true;
                 visual_mode = false;
                 insert_mode = false;
+
+            default:
                 break;
             }
         }
     }
+
+    system("cls");
+    system("color F0");
+    gotoxy(100, 25);
+    printf("Have a good day!");
+    getch();
+
     fclose(file);
 }
 
