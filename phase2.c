@@ -2756,7 +2756,7 @@ void vim_window()
                 break;
 
             // Navigation
-            case 'k': // up
+            case 'w': // up
                 if (cursor_y == 5 && first_line > 1)
                     first_line--;
                 else if (cursor_y > 1)
@@ -2769,7 +2769,7 @@ void vim_window()
 
                 break;
 
-            case 'j': // down
+            case 's': // down
                 if (cursor_y == 36 && last_line - first_line > 36)
                     first_line++;
                 else if (cursor_y <= last_line - first_line)
@@ -2782,12 +2782,12 @@ void vim_window()
 
                 break;
 
-            case 'h': // left
+            case 'a': // left
                 if (cursor_x > 0)
                     cursor_x--;
                 break;
 
-            case 'l': // right
+            case 'd': // right
                 if (cursor_x < line_sizes[(cursor_y - 1) + (first_line - 1)] - 1)
                     cursor_x++;
                 break;
@@ -2840,50 +2840,84 @@ void vim_window()
             input_char = getch();
             switch (input_char)
             {
-            // Navigation
-            case 'k': // up
-                if (cursor_y == 5 && first_line > 1)
-                    first_line--;
-                else if (cursor_y > 1)
-                    cursor_y--;
-
-                while (cursor_x > line_sizes[(cursor_y - 1) + (first_line - 1)] - 1)
-                {
-                    cursor_x--;
-                }
-
-                break;
-
-            case 'j': // down
-                if (cursor_y == 36 && last_line - first_line > 36)
-                    first_line++;
-                else if (cursor_y <= last_line - first_line)
-                    cursor_y++;
-
-                while (cursor_x > line_sizes[(cursor_y - 1) + (first_line - 1)] - 1)
-                {
-                    cursor_x--;
-                }
-
-                break;
-
-            case 'h': // left
-                if (cursor_x > 0)
-                    cursor_x--;
-                break;
-
-            case 'l': // right
-                if (cursor_x < line_sizes[(cursor_y - 1) + (first_line - 1)] - 1)
-                    cursor_x++;
-                break;
 
             // Change mode
             case 27:
                 normal_mode = true;
                 visual_mode = false;
                 insert_mode = false;
+                break;
 
+            case 127:
+                clear();
+                strcat(command_tajzie[0], "removestr");
+
+                strcat(command_tajzie[1], "--file");
+                strcat(command_tajzie[2], direction);
+
+                strcat(command_tajzie[3], "--pos");
+                sprintf(temp, "%d", cursor_y);
+                strcat(command_tajzie[4], temp);
+                sprintf(temp, ":%d", cursor_x);
+                strcat(command_tajzie[4], temp);
+
+                strcat(command_tajzie[5], "-size");
+                sprintf(command_tajzie[6], "%d", 1);
+
+                strcat(command_tajzie[7], "-b");
+
+                removestr();
+
+                if (temp_clipboard[0] == '\n')
+                {
+                    if (cursor_y == 5 && first_line > 1)
+                        first_line--;
+                    else if (cursor_y > 1)
+                        cursor_y--;
+
+                    cursor_x = line_sizes[(cursor_y - 1) + (first_line - 1)] - 1;
+                }
+
+                else
+                    cursor_x--;
+
+                break;
+
+            // writing
             default:
+                clear();
+                strcat(command_tajzie[0], "insertstr");
+
+                strcat(command_tajzie[1], "--file");
+                strcat(command_tajzie[2], direction);
+
+                strcat(command_tajzie[3], "--str");
+                if (input_char == '\r')
+                    command_tajzie[4][0] = '\n';
+                else
+                    command_tajzie[4][0] = input_char;
+
+                strcat(command_tajzie[5], "--pos");
+                sprintf(temp, "%d", cursor_y);
+                strcat(command_tajzie[6], temp);
+                sprintf(temp, ":%d", cursor_x);
+                strcat(command_tajzie[6], temp);
+
+                insertstr();
+
+                if (input_char == '\r')
+                {
+                    if (cursor_y == 36 && last_line - first_line > 36)
+                        first_line++;
+                    else
+                        cursor_y++;
+
+                    cursor_x = 0;
+                }
+
+                else
+                    cursor_x++;
+
                 break;
             }
         }
@@ -2919,7 +2953,7 @@ void vim_window()
             switch (input_char)
             {
             // Navigation
-            case 'k': // up
+            case 'w': // up
                 if (cursor_y == 5 && first_line > 1)
                     first_line--;
                 else if (cursor_y > 1)
@@ -2932,7 +2966,7 @@ void vim_window()
 
                 break;
 
-            case 'j': // down
+            case 's': // down
                 if (cursor_y == 36 && last_line - first_line > 36)
                     first_line++;
                 else if (cursor_y <= last_line - first_line)
@@ -2945,16 +2979,16 @@ void vim_window()
 
                 break;
 
-            case 'h': // left
+            case 'a': // left
                 if (cursor_x > 0)
                     cursor_x--;
                 break;
 
-            case 'l': // right
+            case 'd': // right
                 if (cursor_x < line_sizes[(cursor_y - 1) + (first_line - 1)] - 1)
                     cursor_x++;
                 break;
-            
+
             // Change mode
             case 27:
                 normal_mode = true;
