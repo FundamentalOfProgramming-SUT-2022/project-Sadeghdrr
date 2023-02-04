@@ -457,6 +457,48 @@ bool dash_file()
     return false;
 }
 
+char *name_of(char *direction)
+{
+    int len = strlen(direction);
+    char *file_name = calloc(MAX, sizeof(char));
+
+    int i = len;
+    while (direction[i] != '/')
+    {
+        i--;
+    }
+    i++;
+
+    for (int j = 0; direction[i + j] != '\0'; j++)
+    {
+        file_name[j] = direction[i + j];
+    }
+
+    return file_name;
+}
+
+bool saved_check(char *direction_in_root, char *direction)
+{
+    FILE *file = fopen(direction, "r");
+    FILE *file_in_root = fopen(direction_in_root, "r");
+
+    char temp[MAX];
+    char temp2[MAX];
+
+    while (fgets(temp, MAX, file) != NULL && fgets(temp2, MAX, file_in_root) != NULL)
+    {
+        if (strcmp(temp2, temp))
+            return false;
+
+        if (feof(file) && !feof(file_in_root))
+            return false;
+        else if (feof(file_in_root) && !feof(file))
+            return false;
+    }
+
+    return true;
+}
+
 // -------------------------------------------------------------------------------------------------------------------------------------
 
 void createfile()
@@ -2568,6 +2610,7 @@ void vim_window()
 
     char file_name[MAX];
     char direction[MAX];
+    char direction_in_root[MAX];
     char temp[MAX];
     char input_char;
     int line_sizes[MAX];
@@ -2578,6 +2621,7 @@ void vim_window()
 
     memset(file_name, 0, MAX);
     memset(direction, 0, MAX);
+    memset(direction_in_root, 0, MAX);
     memset(temp, 0, MAX);
     memset(line_sizes, 0, MAX * sizeof(int));
 
@@ -2592,16 +2636,21 @@ void vim_window()
     int first_pos_in_visual;
     int last_pos_in_visual;
 
-    FILE *file = fopen(direction, "r");
+    // FILE *file = fopen(direction, "r");
 
-    // FILE *file = fopen(direction, "w");
-    // fclose(file);
-    // file = fopen(direction, "r");
+    FILE *file = fopen(direction, "w");
+    fclose(file);
+    file = fopen(direction, "r");
 
     while (strcmp(command, "exit") != 0)
     {
         system("cls");
         memset(line_sizes, 0, MAX * sizeof(int));
+
+        if (saved_check(direction_in_root, direction))
+            saved = true;
+        else
+            saved = false;
 
         fseek(file, 0, SEEK_SET);
         current_line = 1;
@@ -2756,32 +2805,193 @@ void vim_window()
                 command[i] = '\0';
 
                 tajzieh();
-                barrasi(direction);
 
-                if (output[0] != '\0')
+                if (strcmp(command_tajzie[0], "save") == 0)
                 {
-                    if (strcmp(output, "Wrong command!") == 0)
+                    if (strcmp(file_name, "Untitled.txt") == 0)
                     {
                         system("cls");
                         system("color CE");
                         gotoxy(100, 25);
-                        printf("Wrong command!");
+                        printf("The file hasn't saved before!");
+                        gotoxy(100, 26);
+                        printf("Use \"saveas\" command first!");
+                        gotoxy(90, 27);
+                        printf("Or if you don't want to save the file, press \"f\".");
+                        input_char = getch();
+                        if (input_char == 'f')
+                        {
+                            fclose(file);
+                            file = fopen(direction, "w");
+                            fputc(' ', file);
+                            fseek(file, 0, SEEK_SET);
+                        }
+                        system("color 07");
+
+                        first_line = 1;
+                        last_line = 1;
+                        cursor_x = 0;
+                        cursor_y = 1;
+                        continue;
+                    }
+
+                    else
+                    {
+                        saved = true;
+                        FILE *file_in_root = fopen(direction_in_root, "w");
+                        fseek(file, 0, SEEK_SET);
+
+                        while (fgets(temp, MAX, file) != NULL)
+                        {
+                            fputs(temp, file_in_root);
+                        }
+
+                        fclose(file_in_root);
+
+                        system("cls");
+                        system("color 25");
+                        gotoxy(100, 25);
+                        printf("Saved!");
+                        getch();
+                        system("color 07");
+                        continue;
+                    }
+                }
+
+                else if (strcmp(command_tajzie[0], "saveas") == 0)
+                {
+                    memset(direction_in_root, 0, MAX);
+                    memset(file_name, 0, MAX);
+
+                    strcat(direction_in_root, command_tajzie[1]);
+                    strcat(file_name, name_of(direction_in_root));
+
+                    clear();
+
+                    strcat(command_tajzie[0], "createfile");
+                    strcat(command_tajzie[1], "--file");
+                    strcat(command_tajzie[2], direction_in_root);
+
+                    createfile();
+
+                    command_tajzie[2][3] = 'u';
+                    command_tajzie[2][4] = 'n';
+                    command_tajzie[2][5] = 'd';
+                    command_tajzie[2][6] = 'o';
+
+                    createfile();
+
+                    saved = true;
+                    FILE *file_in_root = fopen(direction_in_root, "w");
+                    fseek(file, 0, SEEK_SET);
+
+                    while (fgets(temp, MAX, file) != NULL)
+                    {
+                        fputs(temp, file_in_root);
+                    }
+
+                    fclose(file_in_root);
+
+                    system("cls");
+                    system("color 25");
+                    gotoxy(100, 25);
+                    printf("Saved!");
+                    getch();
+                    system("color 07");
+                    continue;
+                }
+
+                else if (strcmp(command_tajzie[0], "open") == 0)
+                {
+                    swap(command_tajzie[1], command_tajzie[2]);
+                    memset(output, 0, ULTRA_MAX);
+                    if (!check_existance())
+                    {
+                        system("cls");
+                        system("color CE");
+                        gotoxy(100, 25);
+                        print_output();
                         getch();
                         system("color 07");
                         continue;
                     }
 
-                    fclose(file);
-                    memset(direction, 0, MAX);
-                    strcat(direction, "../unsaved/Untitled.txt");
+                    swap(command_tajzie[1], command_tajzie[2]);
 
+                    FILE *file_in_root;
+
+                    if (strcmp(file_name, "Untitled.txt"))
+                    {
+                        file_in_root = fopen(direction_in_root, "w");
+
+                        fseek(file, 0, SEEK_SET);
+
+                        while (fgets(temp, MAX, file) != NULL)
+                        {
+                            fputs(temp, file_in_root);
+                        }
+
+                        fclose(file_in_root);
+                    }
+
+                    memset(direction_in_root, 0, MAX);
+                    strcat(direction_in_root, command_tajzie[1]);
+
+                    memset(file_name, 0, MAX);
+                    strcat(file_name, name_of(direction_in_root));
+
+                    fclose(file);
                     file = fopen(direction, "w");
-                    fputs(output, file);
-                    fclose(file);
+                    file_in_root = fopen(direction_in_root, "r");
 
+                    while (fgets(temp, MAX, file_in_root) != NULL)
+                    {
+                        fputs(temp, file);
+                    }
+
+                    fclose(file_in_root);
+                    fclose(file);
                     file = fopen(direction, "r");
+
                     first_line = 1;
-                    last_line = 40;
+                    last_line = 1;
+                    cursor_x = 0;
+                    cursor_y = 1;
+                    continue;
+                }
+
+                else
+                {
+                    barrasi(direction);
+
+                    if (output[0] != '\0')
+                    {
+                        if (strcmp(output, "Wrong command!") == 0)
+                        {
+                            system("cls");
+                            system("color CE");
+                            gotoxy(100, 25);
+                            printf("Wrong command!");
+                            getch();
+                            system("color 07");
+                            continue;
+                        }
+
+                        fclose(file);
+                        memset(direction, 0, MAX);
+                        strcat(direction, "../unsaved/Untitled.txt");
+
+                        file = fopen(direction, "w");
+                        fputs(output, file);
+                        fclose(file);
+
+                        file = fopen(direction, "r");
+                        memset(file_name, 0, MAX);
+                        strcat(file_name, name_of(direction));
+
+                        first_line = 1;
+                        last_line = 40;
+                    }
                 }
 
                 break;
