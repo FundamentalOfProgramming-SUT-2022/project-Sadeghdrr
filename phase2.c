@@ -19,6 +19,7 @@ char command_tajzie[30][MAX];
 char clipboard[MAX];
 char temp_clipboard[MAX];
 char output[ULTRA_MAX];
+int temp_adad;
 
 // -------------------------------------------------------------------------------------------------------------------------------------
 
@@ -1421,6 +1422,8 @@ void replace()
 
         else
         {
+            temp_adad = all_repeats[0];
+
             // removestr
             int line_pos = 1;
             int char_pos = 0;
@@ -1478,6 +1481,8 @@ void replace()
 
         else
         {
+            temp_adad = all_repeats[0];
+
             // removestr
             int line_pos = 1;
             int char_pos = 0;
@@ -1530,6 +1535,8 @@ void replace()
 
         else
         {
+            temp_adad = all_repeats[0];
+
             // removestr
             int line_pos = 1;
             int char_pos = 0;
@@ -2425,16 +2432,17 @@ void barrasi(char direction[])
             swap(command_tajzie[8], command_tajzie[2]);
             swap(command_tajzie[7], command_tajzie[3]);
             swap(command_tajzie[8], command_tajzie[4]);
-            swap(command_tajzie[7], command_tajzie[5]);
-            swap(command_tajzie[8], command_tajzie[6]);
         }
 
-        swap(command_tajzie[1], command_tajzie[5]);
-        swap(command_tajzie[2], command_tajzie[6]);
-        swap(command_tajzie[3], command_tajzie[5]);
-        swap(command_tajzie[4], command_tajzie[6]);
-        swap(command_tajzie[5], command_tajzie[7]);
-        swap(command_tajzie[6], command_tajzie[8]);
+        else
+        {
+            swap(command_tajzie[1], command_tajzie[5]);
+            swap(command_tajzie[2], command_tajzie[6]);
+            swap(command_tajzie[3], command_tajzie[5]);
+            swap(command_tajzie[4], command_tajzie[6]);
+            swap(command_tajzie[5], command_tajzie[7]);
+            swap(command_tajzie[6], command_tajzie[8]);
+        }
 
         if (check_existance())
         {
@@ -2979,7 +2987,14 @@ void vim_window()
                 // phase1
                 else
                 {
+                    bool replace_in_file = false;
+                    if (strcmp(command_tajzie[1], "--file"))
+                        replace_in_file = true;
+
                     barrasi(direction);
+
+                    if (strcmp(command_tajzie[0], "replace") == 0 && replace_in_file)
+                        cursor_x = temp_adad;
 
                     if (output[0] != '\0')
                     {
@@ -3038,9 +3053,9 @@ void vim_window()
 
                 first_line = 1;
                 last_line = 1;
-                cursor_x = 0; 
+                cursor_x = 0;
                 cursor_y = 1;
-                fseek(file,0,SEEK_SET);
+                fseek(file, 0, SEEK_SET);
 
                 break;
 
