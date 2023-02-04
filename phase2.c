@@ -2636,8 +2636,6 @@ void vim_window()
     int first_pos_in_visual;
     int last_pos_in_visual;
 
-    // FILE *file = fopen(direction, "r");
-
     FILE *file = fopen(direction, "w");
     fclose(file);
     file = fopen(direction, "r");
@@ -2806,6 +2804,7 @@ void vim_window()
 
                 tajzieh();
 
+                // saving
                 if (strcmp(command_tajzie[0], "save") == 0)
                 {
                     if (strcmp(file_name, "Untitled.txt") == 0)
@@ -2824,6 +2823,8 @@ void vim_window()
                             fclose(file);
                             file = fopen(direction, "w");
                             fputc(' ', file);
+                            fclose(file);
+                            fopen(direction, "r");
                             fseek(file, 0, SEEK_SET);
                         }
                         system("color 07");
@@ -2847,6 +2848,11 @@ void vim_window()
                         }
 
                         fclose(file_in_root);
+
+                        memset(command_tajzie[2], 0, MAX);
+                        strcat(command_tajzie[2], direction_in_root);
+
+                        undo_backup();
 
                         system("cls");
                         system("color 25");
@@ -2892,6 +2898,11 @@ void vim_window()
 
                     fclose(file_in_root);
 
+                    memset(command_tajzie[2], 0, MAX);
+                    strcat(command_tajzie[2], direction_in_root);
+
+                    undo_backup();
+
                     system("cls");
                     system("color 25");
                     gotoxy(100, 25);
@@ -2932,6 +2943,11 @@ void vim_window()
                         }
 
                         fclose(file_in_root);
+
+                        memset(command_tajzie[2], 0, MAX);
+                        strcat(command_tajzie[2], direction_in_root);
+
+                        undo_backup();
                     }
 
                     memset(direction_in_root, 0, MAX);
@@ -2960,6 +2976,7 @@ void vim_window()
                     continue;
                 }
 
+                // phase1
                 else
                 {
                     barrasi(direction);
@@ -2996,22 +3013,81 @@ void vim_window()
 
                 break;
 
-            case '/':
-                char search_string[MAX];
-                memset(search_string, 0, MAX);
+            // undo
+            case 'u':
+                clear();
+                strcat(command_tajzie[0], "undo");
+                strcat(command_tajzie[1], "--file");
+                strcat(command_tajzie[0], direction_in_root);
 
-                putchar('/');
+                undo();
 
-                i = 0;
-                while ((input_char = getchar()) != '\n')
+                saved = true;
+                FILE *file_in_root = fopen(direction_in_root, "r");
+                fclose(file);
+                file = fopen(direction, "w");
+
+                while (fgets(temp, MAX, file_in_root) != NULL)
                 {
-                    search_string[i] = input_char;
-                    i++;
+                    fputs(temp, file);
                 }
-                search_string[i] = '\0';
 
-                find_infile(search_string);
+                fclose(file_in_root);
+                fclose(file);
+                file = fopen(direction, "r");
+
+                first_line = 1;
+                last_line = 1;
+                cursor_x = 0; 
+                cursor_y = 1;
+                fseek(file,0,SEEK_SET);
+
                 break;
+
+            // auto indent
+            case '=':
+                clear();
+                memset(output, 0, MAX);
+                strcat(command_tajzie[0], "auto-indent");
+                strcat(command_tajzie[1], "--file");
+                strcat(command_tajzie[2], direction);
+
+                if (brace_counter())
+                {
+                    undo_backup();
+                    auto_indent();
+                }
+
+                else
+                {
+                    system("cls");
+                    system("color CE");
+                    gotoxy(100, 25);
+                    print_output();
+                    getch();
+                    system("color 07");
+                    continue;
+                }
+
+                break;
+
+            // find in file
+            // case '/':
+            //     char search_string[MAX];
+            //     memset(search_string, 0, MAX);
+
+            //     putchar('/');
+
+            //     i = 0;
+            //     while ((input_char = getchar()) != '\n')
+            //     {
+            //         search_string[i] = input_char;
+            //         i++;
+            //     }
+            //     search_string[i] = '\0';
+
+            //     find_infile(search_string);
+            //     break;
 
             // Navigation
             case 'w': // up
