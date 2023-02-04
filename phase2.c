@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 #include <stdbool.h>
 #include <errno.h>
 #include <conio.h>
@@ -2588,6 +2589,8 @@ void vim_window()
         memset(window[i], 0, MAX);
     int first_line = 1, last_line = 1, current_line = 1, max_lines = 40;
     int cursor_x = 0, cursor_y = 1;
+    int first_pos_in_visual;
+    int last_pos_in_visual;
 
     FILE *file = fopen(direction, "r");
 
@@ -2613,28 +2616,73 @@ void vim_window()
 
                 if (current_line - first_line == cursor_y - 1)
                 {
-                    int i;
-                    for (i = 0; temp[i] != '\0'; i++)
+                    if (visual_mode)
                     {
-                        if (i == cursor_x && temp[i + 1] == '\0')
+                        int i;
+                        for (i = 0; temp[i] != '\0'; i++)
                         {
-                            setBackgroundColor(LIGHTMAGENTA);
-                            putchar(' ');
-                            if (temp[i] == '\n')
+                            if (i == cursor_x && temp[i + 1] == '\0')
+                            {
+                                setBackgroundColor(LIGHTMAGENTA);
+                                putchar(' ');
+                                if (temp[i] == '\n')
+                                    putchar(temp[i]);
+                                setBackgroundColor(BLACK);
+                            }
+
+                            else if (i == cursor_x)
+                            {
+                                setBackgroundColor(LIGHTMAGENTA);
                                 putchar(temp[i]);
-                            setBackgroundColor(BLACK);
-                        }
+                                setBackgroundColor(BLACK);
+                            }
 
-                        else if (i == cursor_x)
-                        {
-                            setBackgroundColor(LIGHTMAGENTA);
-                            putchar(temp[i]);
-                            setBackgroundColor(BLACK);
-                        }
+                            else if (first_pos_in_visual > cursor_x && i >= last_pos_in_visual && i < first_pos_in_visual)
+                            {
+                                setBackgroundColor(YELLOW);
+                                putchar(temp[i]);
+                                setBackgroundColor(BLACK);
+                            }
 
-                        else
+                            else if (first_pos_in_visual < cursor_x && i <= last_pos_in_visual && i >= first_pos_in_visual)
+                            {
+                                setBackgroundColor(YELLOW);
+                                putchar(temp[i]);
+                                setBackgroundColor(BLACK);
+                            }
+
+                            else
+                            {
+                                putchar(temp[i]);
+                            }
+                        }
+                    }
+
+                    else
+                    {
+                        int i;
+                        for (i = 0; temp[i] != '\0'; i++)
                         {
-                            putchar(temp[i]);
+                            if (i == cursor_x && temp[i + 1] == '\0')
+                            {
+                                setBackgroundColor(LIGHTMAGENTA);
+                                putchar(' ');
+                                if (temp[i] == '\n')
+                                    putchar(temp[i]);
+                                setBackgroundColor(BLACK);
+                            }
+
+                            else if (i == cursor_x)
+                            {
+                                setBackgroundColor(LIGHTMAGENTA);
+                                putchar(temp[i]);
+                                setBackgroundColor(BLACK);
+                            }
+
+                            else
+                            {
+                                putchar(temp[i]);
+                            }
                         }
                     }
                 }
@@ -2792,6 +2840,24 @@ void vim_window()
                     cursor_x++;
                 break;
 
+            // pasting
+            case 'p':
+                clear();
+                strcat(command_tajzie[0], "pastestr");
+
+                strcat(command_tajzie[1], "--file");
+                strcat(command_tajzie[2], direction);
+
+                strcat(command_tajzie[3], "--pos");
+                sprintf(temp, "%d", cursor_y);
+                strcat(command_tajzie[4], temp);
+                sprintf(temp, ":%d", cursor_x);
+                strcat(command_tajzie[4], temp);
+
+                pastestr();
+
+                break;
+
             // Change mode
             case 'i':
                 insert_mode = true;
@@ -2803,6 +2869,7 @@ void vim_window()
                 visual_mode = true;
                 insert_mode = false;
                 normal_mode = false;
+                first_pos_in_visual = cursor_x;
                 break;
 
             default:
@@ -2982,11 +3049,70 @@ void vim_window()
             case 'a': // left
                 if (cursor_x > 0)
                     cursor_x--;
+                last_pos_in_visual = cursor_x;
                 break;
 
             case 'd': // right
                 if (cursor_x < line_sizes[(cursor_y - 1) + (first_line - 1)] - 1)
                     cursor_x++;
+                last_pos_in_visual = cursor_x;
+                break;
+
+            // selecting
+            case 'c': // copystr
+                clear();
+                strcat(command_tajzie[0], "copystr");
+
+                strcat(command_tajzie[1], "--file");
+                strcat(command_tajzie[2], direction);
+
+                strcat(command_tajzie[3], "--pos");
+                sprintf(temp, "%d", cursor_y);
+                strcat(command_tajzie[4], temp);
+                sprintf(temp, ":%d", first_pos_in_visual);
+                strcat(command_tajzie[4], temp);
+
+                strcat(command_tajzie[5], "-size");
+                sprintf(command_tajzie[6], "%d", abs(first_pos_in_visual - last_pos_in_visual));
+
+                if (last_pos_in_visual < first_pos_in_visual)
+                    strcat(command_tajzie[7], "-b");
+                else if (first_pos_in_visual < last_pos_in_visual)
+                    strcat(command_tajzie[7], "-f");
+
+                copystr();
+
+                normal_mode = true;
+                visual_mode = false;
+                insert_mode = false;
+                break;
+
+            case 'x':
+                clear();
+                strcat(command_tajzie[0], "cutstr");
+
+                strcat(command_tajzie[1], "--file");
+                strcat(command_tajzie[2], direction);
+
+                strcat(command_tajzie[3], "--pos");
+                sprintf(temp, "%d", cursor_y);
+                strcat(command_tajzie[4], temp);
+                sprintf(temp, ":%d", first_pos_in_visual);
+                strcat(command_tajzie[4], temp);
+
+                strcat(command_tajzie[5], "-size");
+                sprintf(command_tajzie[6], "%d", abs(first_pos_in_visual - last_pos_in_visual));
+
+                if (last_pos_in_visual < first_pos_in_visual)
+                    strcat(command_tajzie[7], "-b");
+                else if (first_pos_in_visual < last_pos_in_visual)
+                    strcat(command_tajzie[7], "-f");
+
+                cutstr();
+
+                normal_mode = true;
+                visual_mode = false;
+                insert_mode = false;
                 break;
 
             // Change mode
